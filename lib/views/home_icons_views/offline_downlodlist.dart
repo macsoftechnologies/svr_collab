@@ -11,7 +11,7 @@ class _OfflineDownlodlistState extends State<OfflineDownlodlist> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-
+  
       ),
     );
   }

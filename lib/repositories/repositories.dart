@@ -6,6 +6,7 @@ import 'package:svr/models/home_icons_models/offline_model.dart';
 import 'package:svr/models/home_icons_models/online_classes_model.dart';
 import 'package:svr/models/home_icons_models/profile_model.dart';
 import 'package:svr/models/home_icons_models/test_questions_model.dart';
+import 'package:svr/models/home_icons_models/user_payments_model.dart';
 import 'package:svr/models/live_courses_model.dart';
 
 import '../models/demo_courses_model.dart';
@@ -33,8 +34,8 @@ class Repositories {
     }
   }
 
-  Future getLogin(emailMobile, password) async {
-    Response response = await WebService().getLoginData(emailMobile, password);
+  Future getLogin(emailMobile, password, deviceId) async {
+    Response response = await WebService().getLoginData(emailMobile, password, deviceId);
     if (response.statusCode == 200) {
       Map<String, dynamic> data = jsonDecode(response.body);
       return data['userdata'];
@@ -146,6 +147,23 @@ class Repositories {
       throw Exception('Failed to load Subjects');
     }
   }
+
+  Future<List<PaymentDetails>> getPaymentDetails(String userId) async {
+  Response response = await WebService().getUserPaymentDetails(userId);
+
+  if (response.statusCode == 200) {
+    var decoded = json.decode(response.body);
+
+    List<PaymentDetails> payments = (decoded['paymentDetails'] as List)
+        .map((item) => PaymentDetails.fromJson(item))
+        .toList();
+
+    return payments;
+  } else {
+    throw Exception('Failed to load payment details');
+  }
+}
+
 
   Future getRegister(name, email, Mobile, password, courseid) async {
     Response response = await WebService().getRegisterData(

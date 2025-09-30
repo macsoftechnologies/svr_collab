@@ -18,6 +18,8 @@ import 'package:svr/views/home_screen.dart';
 import '../utils/global_keys.dart';
 import '../utils/snackbars_list.dart';
 import '../view_models/login_view_model.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'dart:io';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,6 +29,10 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPage extends State<LoginPage> {
+
+
+
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -94,6 +100,24 @@ class _LoginCardState extends State<LoginCard> {
   TextEditingController emailmobile = TextEditingController();
 
   TextEditingController password = TextEditingController();
+  
+String? deviceId;
+
+@override
+void initState() {
+  super.initState();
+  initDeviceId();
+}
+
+void initDeviceId() async {
+  deviceId = await getDeviceId();
+  setState(() {}); 
+  print("Your Device Id in Login Screen ${deviceId}");
+}
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +155,7 @@ class _LoginCardState extends State<LoginCard> {
                     loading
                         ? const CircularProgressIndicator()
                         : ElevatedButton(
-                            style: ButtonStyle(backgroundColor: MaterialStateProperty.all(primaryColor)),
+                            style: ButtonStyle(backgroundColor: WidgetStateProperty.all(primaryColor)),
                             onPressed: () async {
                               setState(() {
                                 loading = true;
@@ -140,9 +164,10 @@ class _LoginCardState extends State<LoginCard> {
                               setState(() {
                                 loading = false;
                               });
+                          
                             },
                             child: Text(
-                              'Login....',
+                              'Login',
                               style: TextStyle(color: whiteColor, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -158,6 +183,7 @@ class _LoginCardState extends State<LoginCard> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
+
                   builder: (BuildContext context) => const DemoCourses(),
                 ),
               ),
@@ -184,8 +210,11 @@ class _LoginCardState extends State<LoginCard> {
     ));
   }
 
+
+
   loginValidation() async {
     RegExp numberCheck = RegExp(r'^-?[0-9]+$');
+    String? deviceId = await getDeviceId();
     var pattern =
         r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
     RegExp regex = RegExp(pattern);
@@ -193,7 +222,9 @@ class _LoginCardState extends State<LoginCard> {
       SnackBarsList().errorSnackBar(context, "Please Enter Email / Phone Number");
     } else if (password.text.isEmpty) {
       SnackBarsList().errorSnackBar(context, "Please Enter Password");
-    } else {
+    } else if(deviceId == null){
+       SnackBarsList().errorSnackBar(context, "Device Id is Missing");
+    }else{
       if (numberCheck.hasMatch(emailmobile.text[0].toString())) {
         if (emailmobile.text.length != 10 || emailmobile.text.toString().contains(RegExp(r'[a-z]'))) {
           SnackBarsList().errorSnackBar(context, "Please Enter Valid Phone Number");
@@ -203,9 +234,10 @@ class _LoginCardState extends State<LoginCard> {
               print('i am in Login');
               print('Name ${emailmobile.text}');
               print('Name ${password.text}');
+              print('Device Id ${deviceId}');
               //print('Name ${}');
               LoginViewModel loginViewModel = LoginViewModel();
-              await loginViewModel.fetchLoginData(emailmobile.text, password.text);
+              await loginViewModel.fetchLoginData(emailmobile.text, password.text, deviceId);
 
               Map<String, dynamic> data = loginViewModel.loginData;
               SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -217,16 +249,21 @@ class _LoginCardState extends State<LoginCard> {
               userMobileNumber = data['mobile_number'];
               userCourseId = data['course_id'];
               prefs.setString('userData', encodedMap);
+                String? userDeviceIdFromServer = data['device_id']; // <- This might be null
+
+    print("✅ User Device ID from server: $userDeviceIdFromServer");
               //  prefs.setString('userData', encodedMap);
 
 // Set login status to true
 
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (BuildContext context) => const HomeScreen(),
-                ),
-              );
+             Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => HomeScreen(
+          deviceId: userDeviceIdFromServer ?? deviceId, // fallback to local deviceId
+        ),
+      ),
+    );
               SnackBarsList().successSnackBar(context, "Login Success");
             } catch (e) {
               SnackBarsList().errorSnackBar(context, "Login Failed...\nPlease Enter Proper Details");
@@ -235,18 +272,13 @@ class _LoginCardState extends State<LoginCard> {
             SnackBarsList().errorSnackBar(context, "Please Enter Valid Email Address");
           }
 
-          // Navigator.pushReplacement(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (BuildContext context) => const HomeScreen(),
-          //   ),
-          //);
+       
         }
       } else {
         if (regex.hasMatch(emailmobile.text.toString())) {
           try {
             LoginViewModel loginViewModel = LoginViewModel();
-            await loginViewModel.fetchLoginData(emailmobile.text, password.text);
+            await loginViewModel.fetchLoginData(emailmobile.text, password.text, deviceId);
             Map<String, dynamic> data = loginViewModel.loginData;
             SharedPreferences prefs = await SharedPreferences.getInstance();
             String encodedMap = json.encode(data);
@@ -256,12 +288,17 @@ class _LoginCardState extends State<LoginCard> {
             userMobileNumber = data['mobile_number'];
             userCourseId = data['course_id'];
             prefs.setString('userData', encodedMap);
+            String? userDeviceIdFromServer = data['device_id']; // <- This might be null
+
+    print("✅ User Device ID from server: $userDeviceIdFromServer");
             Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (BuildContext context) => const HomeScreen(),
-              ),
-            );
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => HomeScreen(
+          deviceId: userDeviceIdFromServer ?? deviceId, 
+        ),
+      ),
+    );
             SnackBarsList().successSnackBar(context, "Login Success");
           } catch (e) {
             SnackBarsList().errorSnackBar(context, "Login Failed...\nPlease Enter Proper Details");
@@ -272,6 +309,20 @@ class _LoginCardState extends State<LoginCard> {
       }
     }
   }
+}
+
+
+getDeviceId()async{
+  final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+  if(Platform.isAndroid){
+    final androidInfo = await deviceInfo.androidInfo;
+    print(androidInfo.id);
+    return androidInfo.id;
+  }else if (Platform.isIOS){
+    final Iosinfo = await deviceInfo.iosInfo;
+    return Iosinfo.identifierForVendor;
+  }
+  return null;
 }
 
 class SignupCard extends StatefulWidget {
@@ -303,6 +354,7 @@ class _SignupCardState extends State<SignupCard> {
   void initState() {
     getCourseList();
     getUserData();
+      getDeviceId();
     Razorpay _razorpay = Razorpay();
     super.initState();
 
@@ -322,8 +374,11 @@ class _SignupCardState extends State<SignupCard> {
   @override
   void dispose() {
     super.dispose();
+  
     _razorpay.clear(); // Clear Razorpay instance to avoid memory leaks
   }
+
+
 
   Future<void> getCourseList() async {
     try {
@@ -423,7 +478,7 @@ class _SignupCardState extends State<SignupCard> {
                               ),
                               const SizedBox(height: 20),
                               ElevatedButton(
-                                style: ButtonStyle(backgroundColor: MaterialStateProperty.all(primaryColor)),
+                                style: ButtonStyle(backgroundColor: WidgetStateProperty.all(primaryColor)),
                                 onPressed: () {
                                   signUpValidation();
                                 },
@@ -493,21 +548,11 @@ class _SignupCardState extends State<SignupCard> {
         // You can now use this data for navigation or display it
         SnackBarsList().successSnackBar(context, "Welcome, $username! Your ID: $courseid");
 
-        // Navigator.pushReplacement(
-        //     context,
-        //     MaterialPageRoute(
-        //       builder: (BuildContext context) => const HomeScreen(),
-        //     ),
-        //   );
+   
       } catch (e) {
         SnackBarsList().errorSnackBar(context, "Registration Failed...\nPlease Enter Proper Details:$courseid");
       }
-      // Navigator.pushReplacement (
-      //   context,
-      //   MaterialPageRoute (
-      //     builder: (BuildContext context) => const HomeScreen(),
-      //   ),
-      // );
+  
     }
   }
 

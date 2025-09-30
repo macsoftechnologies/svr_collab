@@ -12,7 +12,6 @@ import 'package:svr/view_models/home_icons_view_models/test_questions_view_model
 import 'package:svr/view_models/subjects_view_model.dart';
 import 'package:svr/view_models/live_courses_view_model.dart';
 import 'package:svr/view_models/login_view_model.dart';
-import 'package:svr/views/home_icons_views/offline_download_page.dart';
 import 'package:svr/views/splash_screen.dart';
 
 Future<void> main() async {

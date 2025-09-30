@@ -19,3 +19,4 @@ const String confirm_payment_api = "users/payment";
 const String mycourses ="questions/usersStudymaterialsList";
 const String offlinecourses = "video/getsubjectbByOfflineVideodetails";
 const String logout_api = "users/logout";
+const String PaymentDetails_api="/users/getuserPaymentdetails";

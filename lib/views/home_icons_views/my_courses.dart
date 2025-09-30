@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,7 +7,6 @@ import 'package:svr/view_models/home_icons_view_models/studymaterial_view_model.
 import 'package:svr/views/home_icons_views/home_views/user_courses.dart';
 import 'package:svr/views/login_page.dart';
 import '../../utils/colors.dart';
-import '../../utils/common_widgets.dart';
 
 class MyCourses extends StatefulWidget {
   const MyCourses({super.key});

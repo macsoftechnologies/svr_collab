@@ -92,7 +92,7 @@ class _QuestionsView extends State<QuestionsView> {
             }
           },
           style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all(primaryColor)),
+              backgroundColor: WidgetStateProperty.all(primaryColor)),
           child: const Text("Submit"),
         ),
       ),
@@ -283,7 +283,7 @@ class _QuestionsView extends State<QuestionsView> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(errorColor)),
+                  backgroundColor: WidgetStateProperty.all(errorColor)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -291,7 +291,7 @@ class _QuestionsView extends State<QuestionsView> {
             ),
             TextButton(
               style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(successColor)),
+                  backgroundColor: WidgetStateProperty.all(successColor)),
               onPressed: () async {
                 // Show loading indicator before API call
                 setState(() {

@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:svr/utils/colors.dart';
 import 'package:svr/views/home_screen.dart';
 
 import '../utils/global_keys.dart';

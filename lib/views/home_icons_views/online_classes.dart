@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:svr/models/home_icons_models/online_classes_model.dart';
@@ -6,7 +7,6 @@ import 'package:svr/view_models/home_icons_view_models/online_classes_view_model
 import 'package:svr/views/home_icons_views/offline_download_page.dart';
 import 'package:svr/utils/colors.dart';
 import 'package:video_player/video_player.dart';
-import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'home_views/video_play_view.dart';
@@ -93,79 +93,104 @@ class _OnlineClasses extends State<OnlineClasses> {
   }
 
   // Download the video file and save it locally
-  Future<void> _downloadVideo(OnlineClassesModel video) async {
-    final preferredUrl = _getPreferredVideoUrl(video);
-    if (preferredUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("No valid video URL found for download"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+ Future<void> _downloadVideo(OnlineClassesModel video) async {
+  final preferredUrl = _getPreferredVideoUrl(video);
+  if (preferredUrl == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("No valid video URL found for download"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
 
-    final videoName = video.videoName ?? "UnknownVideo";
-    final fileName = "$videoName.mp4";
-    final videoId = video.videoId ?? "unknown_id";
+  final videoName = video.videoName ?? "UnknownVideo";
+  final fileName = "$videoName.mp4";
+  final videoId = video.videoId ?? "unknown_id";
 
-    setState(() {
-      _downloadProgress[videoId] = 0.0;
-    });
+  setState(() {
+    _downloadProgress[videoId] = 0.0;
+  });
 
-    try {
-      Directory appDocDir = await getApplicationDocumentsDirectory();
-      String savePath = '${appDocDir.path}/$fileName';
+  try {
+    final Directory appDocDir = await getApplicationDocumentsDirectory();
+    final String savePath = '${appDocDir.path}/$fileName';
 
-      Dio dio = Dio();
+    Dio dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(minutes: 5),
+    ));
 
-      await dio.download(
-        preferredUrl,
-        savePath,
-        options: Options(
-          responseType: ResponseType.bytes,
-          followRedirects: true,
-        ),
-        onReceiveProgress: (receivedBytes, totalBytes) {
-          if (totalBytes != -1) {
+    int lastProgress = 0;
+    int lastReceived = 0;
+    DateTime lastTime = DateTime.now();
+
+    await dio.download(
+      preferredUrl,
+      savePath,
+      options: Options(
+        responseType: ResponseType.bytes,
+        followRedirects: true,
+      ),
+      onReceiveProgress: (received, total) {
+        if (total != -1) {
+          final progress = ((received / total) * 100).toInt();
+
+          // Throttle UI updates: only update every 5%
+          if (progress - lastProgress >= 5) {
+            lastProgress = progress;
             setState(() {
-              _downloadProgress[videoId] = receivedBytes / totalBytes;
+              _downloadProgress[videoId] = received / total;
             });
           }
-        },
-      );
 
-      final file = File(savePath);
-      if (!await file.exists() || await file.length() == 0) {
-        throw Exception("Downloaded file invalid");
-      }
+          // Debugging: Print download speed (optional)
+          final now = DateTime.now();
+          final elapsed = now.difference(lastTime).inSeconds;
+          if (elapsed >= 1) {
+            final speed = ((received - lastReceived) / 1024 / elapsed).toStringAsFixed(2);
+            print("Download speed: $speed KB/s");
 
-      setState(() {
-        _downloadProgress.remove(videoId);
-      });
+            lastReceived = received;
+            lastTime = now;
+          }
+        }
+      },
+    );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("'$videoName' downloaded successfully!"),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      print("✅ File downloaded to: $savePath");
-    } catch (e) {
-      setState(() {
-        _downloadProgress.remove(videoId);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Download failed: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      print("❌ Download error: $e");
+    final file = File(savePath);
+    if (!await file.exists() || await file.length() == 0) {
+      throw Exception("Downloaded file invalid or corrupted");
     }
+
+    setState(() {
+      _downloadProgress.remove(videoId);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("'$videoName' downloaded successfully!"),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    print("✅ File downloaded to: $savePath");
+  } catch (e) {
+    setState(() {
+      _downloadProgress.remove(videoId);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Download failed: $e"),
+        backgroundColor: Colors.red,
+      ),
+    );
+
+    print("❌ Download error: $e");
   }
+}
 
   // Navigate to video player based on download status and URL type
   void _playVideo(OnlineClassesModel video, String? downloadedPath) {

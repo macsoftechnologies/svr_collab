@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
@@ -17,6 +16,8 @@ Future<void> createPaymentRequest(String courseId, String courseAmount, String e
     "email": email,
     "phone": "User Phone", // You can use the phone from registration
     "allow_repeated_payments": "true",
+
+    
     "send_email": "false",
     "send_sms": "false",
     "redirect_url": "http://www.example.com/redirect/",

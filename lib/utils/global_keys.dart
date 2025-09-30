@@ -3,6 +3,7 @@ var userName = "";
 var userEmail = "";
 var userMobileNumber = "";
 var userCourseId = "";
+var userDeviceId = "";
 
 List homeIcons = [
   {"id": 1, "name": "My Courses", "img": "assets/my_courses.png"},

@@ -22,10 +22,28 @@ class WebService {
     return response;
   }
 
+
+
+ Future<Response> getUserPaymentDetails(String userId) async {
+  final data = jsonEncode({
+    "user_id": userId,
+  });
+
+  var response = await post(
+    Uri.parse(main_url + PaymentDetails_api),
+    headers: headers,
+    body: data,
+  );
+
+  return response;
+}
+
+
+
   // login service
-  getLoginData(emailMobile, password) async {
+  getLoginData(emailMobile, password, deviceId) async {
     final data = jsonEncode(
-        {"emailmobile": "$emailMobile", "password": "$password"});
+        {"emailmobile": "$emailMobile", "password": "$password", "device_id" : deviceId});
     var response = await post(
       Uri.parse(main_url + login_api),
       headers: headers,

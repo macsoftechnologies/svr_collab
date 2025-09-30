@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import '../repositories/repositories.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  Map<String, dynamic> _loginInfo = {};
+  Map<String, dynamic> loginData = {};
 
-  Map<String, dynamic> get loginData => _loginInfo;
-
-  Future<void> fetchLoginData(emailMobile, password) async {
+  Future<void> fetchLoginData(String emailMobile, String password, String deviceId) async {
     try {
-      _loginInfo = await Repositories().getLogin(emailMobile, password);
+      loginData = await Repositories().getLogin(emailMobile, password, deviceId);
       notifyListeners();
     } catch (e) {
-      throw Exception('Failed to Login Vailed: $e');
+      throw Exception("Login failed: $e");
     }
   }
 }
+
