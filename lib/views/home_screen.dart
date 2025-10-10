@@ -1,32 +1,24 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:svr/models/live_courses_model.dart';
 import 'package:svr/utils/colors.dart';
-import 'package:svr/utils/strings_info.dart';
 import 'package:svr/view_models/home_icons_view_models/payment_view_model.dart';
 import 'package:svr/view_models/live_courses_view_model.dart';
 import 'package:svr/views/home_icons_views/my_courses.dart';
 import 'package:svr/views/home_icons_views/rewards_page.dart';
 import 'package:svr/views/home_icons_views/test_questions.dart';
-import 'package:svr/views/login_page.dart';
 import '../utils/common_widgets.dart';
 import '../utils/global_keys.dart';
 import '../utils/snackbars_list.dart';
 import 'home_icons_views/home_views/user_courses.dart';
 import 'home_icons_views/profile_page.dart';
 
-
 class HomeScreen extends StatefulWidget {
-  final String?deviceId;
-  const HomeScreen({super.key,  this.deviceId});
+  const HomeScreen({super.key});
 
   @override
   State<StatefulWidget> createState() => _HomeScreen();
@@ -37,143 +29,28 @@ class _HomeScreen extends State<HomeScreen> {
   late LiveCoursesModel selectedCourseToPurchase;
   // late Razorpay _razorpay;
   Map<String, dynamic> userData = {};
-   Timer? _deviceCheckTimer;
-  
   Razorpay _razorpay = Razorpay();
-  // @override
-  // void initState() {
-  //   // _razorpay = Razorpay();
-  //   // _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-  //   // _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-  //   // _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-  //   super.initState();
-
-  //     print("✅ Device ID received in HomeScreen: ${widget.deviceId}");
-
-  //   // Check every 5 minutes
-  //   _deviceCheckTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-  //     print("Timer Started...");
-  //     deviceIdCheckerLogoutHandler();
-  //   });
-  // }
-
   @override
-void initState() {
-  super.initState();
-  print("🔧 initState called");
+  void initState() {
+    // _razorpay = Razorpay();
+    // _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    // _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    // _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    super.initState();
+  }
 
-  print("✅ Device ID received in HomeScreen: ${widget.deviceId}");
-
-  _deviceCheckTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-    print("⏱ Timer Triggered...");
-    deviceIdCheckerLogoutHandler();
-   
-  });
-}
-
-
-  
   @override
   void dispose() {
     //_razorpay.clear();
-    _deviceCheckTimer?.cancel();
     super.dispose();
-  }
-
-    Future<void> logout(BuildContext context) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    try {
-      // Get user ID from SharedPreferences
-      String? userDataString = prefs.getString('userData');
-      if (userDataString == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User data not found')),
-        );
-        return; // Don't proceed
-      }
-
-      Map<String, dynamic> userData = json.decode(userDataString);
-      String userId = userData['user_id'].toString();
-
-      // Make logout API call
-      final response = await http.post(
-        Uri.parse('https://svracademy.in/services/users/logout'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'user_id': userId}),
-      );
-
-      if (response.statusCode == 200) {
-        Map<String, dynamic> result = json.decode(response.body);
-
-        if (result['status'] == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Logout Successfully!')),
-          );
-          // API success - clear data and navigate
-          await prefs.setBool('isLoggedIn', false);
-          await prefs.remove('userData');
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginPage()),
-          );
-        } else {
-          // API returned error status
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Logout failed: ${result['message']}')),
-          );
-        }
-      } else {
-        // HTTP error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Logout failed: HTTP ${response.statusCode}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logout failed: $e')),
-      );
-    }
-  }
-
-
-
-    Future<void> deviceIdCheckerLogoutHandler() async {
-    if (widget.deviceId == null) {
-      print("No deviceId saved, skipping check.");
-     logout(context);
-    }
-
-    final currentDeviceId = await getDeviceId();
-
-    if (currentDeviceId == widget.deviceId) {
-      print("✅ Device IDs match");
-    } else {
-      print("🚫 Device ID mismatch. Logging out...");
-      logout(context);
-     
-    }
-  }
-
- 
-
-
-
-  Future<String?> getDeviceId() async {
-    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    if (Platform.isAndroid) {
-      final androidInfo = await deviceInfo.androidInfo;
-      return androidInfo.id;
-    } else if (Platform.isIOS) {
-      final iosInfo = await deviceInfo.iosInfo;
-      return iosInfo.identifierForVendor;
-    }
-    return null;
   }
 
   @override
   Widget build(BuildContext context) {
+
+    final filteredHomeIcons = homeIcons.where((icon) {
+    return icon["name"] != "Online Classes" && icon["name"] != "Study Materials";
+  }).toList();
     return Scaffold(
         backgroundColor: secondaryColor,
         appBar: CommonWidgets(
@@ -207,11 +84,10 @@ void initState() {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(color: secondaryColor, borderRadius: const BorderRadius.all(Radius.circular(20))),
                           child: const Text(
-                            "APPSC GROUPS  ",
+                            "APPSC GROUPS",
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
                             textAlign: TextAlign.center,
                           ),
-                          
                         ),
                         const SizedBox(
                           height: 10,
@@ -344,105 +220,79 @@ void initState() {
                   ),
                 ),
               ),
+
+
               Container(
                 height: MediaQuery.of(context).size.height / 2.8,
                 alignment: Alignment.center,
                 padding: const EdgeInsets.all(12),
-                child: GridView.builder(
-                  itemCount: homeIcons.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 6.0, mainAxisSpacing: 40),
-                  itemBuilder: (BuildContext context, int index) {
-                    return InkWell(
-                      onTap: () {
-                        if (homeIcons[index]["name"] == "My Courses") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) => const MyCourses(),
-                            ),
-                          );
-                        } else if (homeIcons[index]["name"] == "Online Classes") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) =>  UserCoursesView(type: "Online Classes"),
-                            ),
-                          );
-                        } else if (homeIcons[index]["name"] == "Study Materials") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) =>  UserCoursesView(type: "Materials"),
-                            ),
-                          );
-                        }
-                        else if (homeIcons[index]["name"] == "Tests") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) => const TestQuestions(),
-                            ),
-                          );
-                        } else if (homeIcons[index]["name"] == "Profile") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) => const Profile(),
-                            ),
-                          );
-                        } else if (homeIcons[index]["name"] == "socialize") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) => const RewardsPage(),
-                            ),
-                          );
-                        }
-                        // else if (homeIcons[index]["name"] == "Offline") {
-                        //   Navigator.push(
-                        //     context,
-                        //     MaterialPageRoute(
-                        //       builder: (BuildContext context) => const OfflineDownloadPage(),
-                        //     ),
-                       //    );
-                       // }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                            color: primaryColor,
-                            borderRadius: const BorderRadius.all(Radius.circular(20))
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible( // or Expanded
-                              child: Image.asset(
-                                homeIcons[index]["img"],
-                                height: 80,
-                                width: 80,
-                                fit: BoxFit.contain, // Add this to maintain aspect ratio
-                              ),
-                            ),
-                            const SizedBox(height: 5), // Add some spacing
-                            Text(
-                              "${homeIcons[index]["name"]}",
-                              style: TextStyle(
-                                color: whiteColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center, // Optional: center align text
-                              maxLines: 2, // Optional: limit text to 2 lines
-                              overflow: TextOverflow.ellipsis, // Optional: add ellipsis if text overflows
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                child:
+                
+                 GridView.builder(
+  itemCount: filteredHomeIcons.length,
+  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: 3,
+    crossAxisSpacing: 6.0,
+    mainAxisSpacing: 40,
+  ),
+  itemBuilder: (BuildContext context, int index) {
+    return InkWell(
+      onTap: () {
+        final iconName = filteredHomeIcons[index]["name"];
+        if (iconName == "My Courses") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MyCourses()),
+          );
+        } else if (iconName == "Tests") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TestQuestions()),
+          );
+        } else if (iconName == "Profile") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const Profile()),
+          );
+        } else if (iconName == "socialize") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const RewardsPage()),
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: primaryColor,
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Image.asset(
+              filteredHomeIcons[index]["img"],
+              height: 80,
+              width: 80,
+            ),
+            Text(
+              "${filteredHomeIcons[index]["name"]}",
+              style: TextStyle(color: whiteColor, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+),
+
+
               ),
+
+
+
+              
             ],
           ),
         ));

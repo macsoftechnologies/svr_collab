@@ -5,9 +5,11 @@ import 'package:svr/models/home_icons_models/materials_model.dart';
 import 'package:svr/models/home_icons_models/offline_model.dart';
 import 'package:svr/models/home_icons_models/online_classes_model.dart';
 import 'package:svr/models/home_icons_models/profile_model.dart';
+import 'package:svr/models/home_icons_models/resend_otp_model.dart';
 import 'package:svr/models/home_icons_models/test_questions_model.dart';
 import 'package:svr/models/home_icons_models/user_payments_model.dart';
 import 'package:svr/models/live_courses_model.dart';
+import 'package:svr/utils/global_keys.dart';
 
 import '../models/demo_courses_model.dart';
 import '../models/home_icons_models/courses_model.dart';
@@ -22,6 +24,23 @@ class Repositories {
   }
 
   Repositories._internal();
+
+
+ Future<List<resendOTPmodel>> resendOTPfn()async {
+  Response response = await WebService().SendForgotPasswordEmail(userEmail);
+  if(response.statusCode == 200){
+    return List<resendOTPmodel>.from(
+      json.decode(response.body).map((x)=>(
+          resendOTPmodel.fromJson((x))
+      ))
+    );
+
+  }else{
+    throw Exception('Failed to Resend OTP');
+  }
+
+ }
+
 
   Future<List<DemoCoursesModel>> getDemoCourses() async {
     Response response = await WebService().getDemoCourseData();

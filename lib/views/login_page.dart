@@ -1,11 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:svr/models/live_courses_model.dart';
-import 'package:svr/repositories/repositories.dart';
 
 import 'package:svr/utils/colors.dart';
 import 'package:svr/view_models/home_icons_view_models/payment_view_model.dart';
@@ -101,19 +99,15 @@ class _LoginCardState extends State<LoginCard> {
 
   TextEditingController password = TextEditingController();
   
-String? deviceId;
+String? userId;
 
 @override
 void initState() {
   super.initState();
-  initDeviceId();
+
 }
 
-void initDeviceId() async {
-  deviceId = await getDeviceId();
-  setState(() {}); 
-  print("Your Device Id in Login Screen ${deviceId}");
-}
+
 
 
 
@@ -135,7 +129,7 @@ void initDeviceId() async {
                   children: <Widget>[
                     ClipOval(
                       child: SizedBox.fromSize(
-                        size: const Size.fromRadius(58), // Image radius
+                        size: const Size.fromRadius(55), // Image radius
                         child: Image.asset('assets/logo.jpeg', fit: BoxFit.cover),
                       ),
                     ),
@@ -144,7 +138,7 @@ void initDeviceId() async {
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(labelText: 'Email / Phone Number'),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     TextField(
                       controller: password,
                       textInputAction: TextInputAction.done,
@@ -170,6 +164,7 @@ void initDeviceId() async {
                               'Login',
                               style: TextStyle(color: whiteColor, fontWeight: FontWeight.bold),
                             ),
+                            
                           ),
                   ],
                 ),
@@ -188,14 +183,14 @@ void initDeviceId() async {
                 ),
               ),
               child: const Text(
-                "-> Demo Courses",
+               "",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             )),
         Positioned(
 
             right: 30,
-            top: 365,
+            top: 370,
             child: InkWell(
               onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder:(BuildContext context)=> const ForgotPassword())
@@ -203,8 +198,9 @@ void initDeviceId() async {
                    },
               child: const Text(
                 "Forgot password",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
+              
             )),
       ],
     ));
@@ -260,7 +256,7 @@ void initDeviceId() async {
       context,
       MaterialPageRoute(
         builder: (BuildContext context) => HomeScreen(
-          deviceId: userDeviceIdFromServer ?? deviceId, // fallback to local deviceId
+       
         ),
       ),
     );
@@ -295,7 +291,7 @@ void initDeviceId() async {
       context,
       MaterialPageRoute(
         builder: (BuildContext context) => HomeScreen(
-          deviceId: userDeviceIdFromServer ?? deviceId, 
+    
         ),
       ),
     );

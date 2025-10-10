@@ -22,7 +22,6 @@ class _OfflineDownloadPageState extends State<OfflineDownloadPage> {
     _loadDownloadedFiles();
   }
 
-  // Load all downloaded video files from the app's internal storage
   Future<void> _loadDownloadedFiles() async {
     try {
       setState(() {
@@ -32,7 +31,6 @@ class _OfflineDownloadPageState extends State<OfflineDownloadPage> {
       final Directory appDocDir = await getApplicationDocumentsDirectory();
       final List<FileSystemEntity> files = appDocDir.listSync();
 
-      // Filter only .mp4 files and convert to File objects
       final List<File> videoFiles = files.where((file) {
         return file is File && file.path.toLowerCase().endsWith('.mp4');
       }).cast<File>().toList();
@@ -46,32 +44,31 @@ class _OfflineDownloadPageState extends State<OfflineDownloadPage> {
       setState(() {
         _isLoading = false;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error loading downloaded videos'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error loading downloaded videos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-  // Function to delete the video file from local storage
   Future<void> _deleteVideo(File videoFile) async {
     try {
       if (await videoFile.exists()) {
         await videoFile.delete();
 
-        // Verify the file is actually deleted
         if (!await videoFile.exists()) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('"${_getFileName(videoFile)}" deleted successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          // Remove from list and update UI
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('"${_getFileName(videoFile)}" deleted successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
           setState(() {
             _downloadedFiles.removeWhere((file) => file.path == videoFile.path);
           });
@@ -79,30 +76,30 @@ class _OfflineDownloadPageState extends State<OfflineDownloadPage> {
           throw Exception("File still exists after deletion attempt");
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Video file not found'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        // Refresh list since file doesn't exist
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Video file not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
         _loadDownloadedFiles();
       }
     } catch (e) {
       print("Error deleting video: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to delete video: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-
-      // Refresh list to ensure consistency
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete video: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       _loadDownloadedFiles();
     }
   }
 
-  // Show confirmation dialog before deletion
   Future<void> _showDeleteConfirmationDialog(File videoFile) async {
     return showDialog<void>(
       context: context,
@@ -116,9 +113,7 @@ class _OfflineDownloadPageState extends State<OfflineDownloadPage> {
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -133,7 +128,6 @@ class _OfflineDownloadPageState extends State<OfflineDownloadPage> {
     );
   }
 
-  // Get file name without extension
   String _getFileName(File file) {
     try {
       String fileName = file.path.split('/').last;
@@ -143,7 +137,6 @@ class _OfflineDownloadPageState extends State<OfflineDownloadPage> {
     }
   }
 
-  // Get file size in readable format
   Future<String> _getFileSize(File file) async {
     try {
       final stat = await file.stat();
@@ -178,72 +171,72 @@ class _OfflineDownloadPageState extends State<OfflineDownloadPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _downloadedFiles.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.video_library,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "No Offline Videos Found",
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Download videos from Online Classes to view them here",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      )
-          : RefreshIndicator(
-        onRefresh: _loadDownloadedFiles,
-        child: ListView.builder(
-          itemCount: _downloadedFiles.length,
-          itemBuilder: (context, index) {
-            final file = _downloadedFiles[index];
-            final videoName = _getFileName(file);
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.video_library,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "No Offline Videos Found",
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Download videos from Online Classes to view them here",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadDownloadedFiles,
+                  child: ListView.builder(
+                    itemCount: _downloadedFiles.length,
+                    itemBuilder: (context, index) {
+                      final file = _downloadedFiles[index];
+                      final videoName = _getFileName(file);
 
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: ListTile(
-                leading: const Icon(Icons.video_library, size: 36),
-                title: Text(
-                  videoName,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: ListTile(
+                          leading: const Icon(Icons.video_library, size: 36),
+                          title: Text(
+                            videoName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: FutureBuilder<String>(
+                            future: _getFileSize(file),
+                            builder: (context, snapshot) {
+                              return Text(
+                                snapshot.hasData ? snapshot.data! : 'Loading...',
+                              );
+                            },
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _showDeleteConfirmationDialog(file),
+                            tooltip: 'Delete Video',
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VideoPlayerScreen(filePath: file.path),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                subtitle: FutureBuilder<String>(
-                  future: _getFileSize(file),
-                  builder: (context, snapshot) {
-                    return Text(
-                      snapshot.hasData ? snapshot.data! : 'Loading...',
-                    );
-                  },
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _showDeleteConfirmationDialog(file),
-                  tooltip: 'Delete Video',
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => VideoPlayerScreen(filePath: file.path),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ),
-      ),
     );
   }
 }
@@ -259,10 +252,11 @@ class VideoPlayerScreen extends StatefulWidget {
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   late VideoPlayerController _controller;
-  bool _isPlaying = true;
+  bool _isPlaying = false;
   bool _isFullScreen = false;
   bool _isInitialized = false;
   bool _isLoading = true;
+  bool _showControls = true;
 
   @override
   void initState() {
@@ -274,7 +268,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     try {
       final file = File(widget.filePath);
 
-      // Check if file exists before initializing
       if (!await file.exists()) {
         _showErrorAndGoBack('Video file not found');
         return;
@@ -283,8 +276,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       _controller = VideoPlayerController.file(file)
         ..addListener(() {
           if (_controller.value.hasError) {
-            print("Video player error: ${_controller.value.errorDescription}");
+            _showErrorAndGoBack('Video player error: ${_controller.value.errorDescription}');
           }
+          if (mounted) setState(() {});
         });
 
       await _controller.initialize();
@@ -292,6 +286,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       setState(() {
         _isInitialized = true;
         _isLoading = false;
+        _isPlaying = true;
       });
 
       _controller.play();
@@ -314,55 +309,76 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
-  // Toggle play/pause functionality
   void _togglePlayPause() {
     setState(() {
-      if (_isPlaying) {
+      if (_controller.value.isPlaying) {
         _controller.pause();
+        _isPlaying = false;
       } else {
         _controller.play();
+        _isPlaying = true;
       }
-      _isPlaying = !_isPlaying;
+      _showControls = true;
     });
   }
 
-  // Toggle full-screen functionality
   void _toggleFullScreen() {
     setState(() {
       _isFullScreen = !_isFullScreen;
       if (_isFullScreen) {
-        // Lock orientation to landscape
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.landscapeRight,
-          DeviceOrientation.landscapeLeft
+          DeviceOrientation.landscapeLeft,
         ]);
       } else {
-        // Reset orientation back to portrait
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.portraitUp,
-          DeviceOrientation.portraitDown
+          DeviceOrientation.portraitDown,
         ]);
       }
     });
   }
 
-  // Handle back press to stop video and dispose the controller
   Future<bool> _onWillPop() async {
-    // Reset orientation when leaving the screen
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown
+      DeviceOrientation.portraitDown,
     ]);
 
-    // Pause the video
-    if (_isPlaying) {
-      await _controller.pause();
-    }
-
-    // Dispose the controller
+    await _controller.pause();
     _controller.dispose();
-
     return true;
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+    if (hours > 0) {
+      return '${twoDigits(hours)}:${twoDigits(minutes)}:${twoDigits(seconds)}';
+    } else {
+      return '${twoDigits(minutes)}:${twoDigits(seconds)}';
+    }
+  }
+
+  void _onTapVideo() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+
+    if (_showControls) {
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            _showControls = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -371,69 +387,83 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: Colors.black,
-        appBar: _isFullScreen ? null : AppBar(
-          title: const Text("Video Player"),
-          backgroundColor: Colors.black,
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _isInitialized
-            ? Stack(
-          children: [
-            Center(
-              child: AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
-                child: VideoPlayer(_controller),
+        appBar: _isFullScreen
+            ? null
+            : AppBar(
+                title: const Text("Video Player"),
+                backgroundColor: Colors.black,
               ),
-            ),
-            // Play/Pause button
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.center,
-                child: IconButton(
-                  icon: Icon(
-                    _isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
-                    size: 50,
-                  ),
-                  onPressed: _togglePlayPause,
-                ),
-              ),
-            ),
-            // Full-screen button
-            if (!_isFullScreen)
-              Positioned(
-                bottom: 20,
-                right: 20,
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.fullscreen,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                  onPressed: _toggleFullScreen,
-                ),
-              ),
-            // Exit full-screen button (shown only in full-screen mode)
-            if (_isFullScreen)
-              Positioned(
-                top: 20,
-                right: 20,
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.fullscreen_exit,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                  onPressed: _toggleFullScreen,
-                ),
-              ),
-          ],
-        )
-            : const Center(
-          child: Text(
-            "Failed to load video",
-            style: TextStyle(color: Colors.white),
+        body: GestureDetector(
+          onTap: _onTapVideo,
+          child: Center(
+            child: _isLoading
+                ? const CircularProgressIndicator()
+                : _isInitialized
+                    ? Stack(
+                        children: [
+                          Center(
+                            child: AspectRatio(
+                              aspectRatio: _controller.value.aspectRatio,
+                              child: VideoPlayer(_controller),
+                            ),
+                          ),
+                          if (_showControls) ...[
+                            // Play/pause button overlay
+                            Positioned.fill(
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: Container(
+                                  
+                                  child: IconButton(
+                                    iconSize: 64,
+                                    icon: Icon(
+                                      _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: _togglePlayPause,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Bottom controls: progress slider, time, fullscreen button
+                            Positioned(
+                              bottom: 50,
+                              left: 10,
+                              right: 10,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  VideoProgressSlider(controller: _controller),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        _formatDuration(_controller.value.position),
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          _isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: _toggleFullScreen,
+                                      ),
+                                      Text(
+                                        _formatDuration(_controller.value.duration),
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      )
+                    : const Text(
+                        "Failed to load video",
+                        style: TextStyle(color: Colors.white),
+                      ),
           ),
         ),
       ),
@@ -443,11 +473,71 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void dispose() {
     _controller.dispose();
-    // Ensure orientation is reset when widget is disposed
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown
+      DeviceOrientation.portraitDown,
     ]);
     super.dispose();
+  }
+}
+
+class VideoProgressSlider extends StatefulWidget {
+  final VideoPlayerController controller;
+
+  const VideoProgressSlider({super.key, required this.controller});
+
+  @override
+  _VideoProgressSliderState createState() => _VideoProgressSliderState();
+}
+
+class _VideoProgressSliderState extends State<VideoProgressSlider> {
+  double? _currentValue;
+  bool _isDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_updateValue);
+  }
+
+  void _updateValue() {
+    if (!_isDragging && mounted) {
+      setState(() {
+        _currentValue = widget.controller.value.position.inMilliseconds.toDouble();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_updateValue);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = widget.controller.value.duration.inMilliseconds.toDouble();
+    final position = _currentValue ?? widget.controller.value.position.inMilliseconds.toDouble();
+
+    return Slider(
+      min: 0,
+      max: duration > 0 ? duration : 1,
+      value: position.clamp(0, duration),
+      onChanged: (value) {
+        setState(() {
+          _currentValue = value;
+          _isDragging = true;
+        });
+      },
+      onChangeEnd: (value) {
+        widget.controller.seekTo(Duration(milliseconds: value.toInt()));
+        setState(() {
+          _isDragging = false;
+        });
+      },
+      activeColor: Colors.blueAccent,
+      inactiveColor: Colors.white38,
+    );
   }
 }

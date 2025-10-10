@@ -39,6 +39,21 @@ class WebService {
 }
 
 
+SendForgotPasswordEmail(emailAddress)async{
+  final data = jsonEncode(
+    {
+      "email" : emailAddress
+    }
+  );
+   var response = await post(
+    Uri.parse(main_url + resendOTP),
+    headers: headers,
+    body: data
+   );
+   return response;
+
+}
+
 
   // login service
   getLoginData(emailMobile, password, deviceId) async {

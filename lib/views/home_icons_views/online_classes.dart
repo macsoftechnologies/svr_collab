@@ -36,47 +36,36 @@ class _OnlineClasses extends State<OnlineClasses> {
 
   // Function to get the preferred video URL based on priority rules
   String? _getPreferredVideoUrl(OnlineClassesModel video) {
-    // First priority: video_link if it's not empty and not from YouTube
     if (video.videoLink != null &&
         video.videoLink!.isNotEmpty &&
         !_isYouTubeUrl(video.videoLink!)) {
       return video.videoLink;
     }
-
-    // Second priority: other_video_link if it's not empty and not from YouTube
     if (video.otherVideoLink != null &&
         video.otherVideoLink!.isNotEmpty &&
         !_isYouTubeUrl(video.otherVideoLink!)) {
       return video.otherVideoLink;
     }
-
-    // Third priority: video_link even if it's YouTube (if other_video_link is empty or also YouTube)
     if (video.videoLink != null && video.videoLink!.isNotEmpty) {
       return video.videoLink;
     }
-
-    // Fourth priority: other_video_link as last resort
     if (video.otherVideoLink != null && video.otherVideoLink!.isNotEmpty) {
       return video.otherVideoLink;
     }
-
     return null;
   }
 
-  // Check if URL is from YouTube
   bool _isYouTubeUrl(String url) {
     return url.contains('youtube.com') ||
         url.contains('youtu.be') ||
         url.contains('youtube-nocookie.com');
   }
 
-  // Check if the video can be downloaded (non-YouTube URLs only)
   bool _isDownloadable(OnlineClassesModel video) {
     final preferredUrl = _getPreferredVideoUrl(video);
     return preferredUrl != null && !_isYouTubeUrl(preferredUrl);
   }
 
-  // Check if the video is already downloaded
   Future<String?> _getDownloadedVideoPath(String videoName) async {
     try {
       Directory appDocDir = await getApplicationDocumentsDirectory();
@@ -92,107 +81,104 @@ class _OnlineClasses extends State<OnlineClasses> {
     }
   }
 
-  // Download the video file and save it locally
- Future<void> _downloadVideo(OnlineClassesModel video) async {
-  final preferredUrl = _getPreferredVideoUrl(video);
-  if (preferredUrl == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("No valid video URL found for download"),
-        backgroundColor: Colors.red,
-      ),
-    );
-    return;
-  }
-
-  final videoName = video.videoName ?? "UnknownVideo";
-  final fileName = "$videoName.mp4";
-  final videoId = video.videoId ?? "unknown_id";
-
-  setState(() {
-    _downloadProgress[videoId] = 0.0;
-  });
-
-  try {
-    final Directory appDocDir = await getApplicationDocumentsDirectory();
-    final String savePath = '${appDocDir.path}/$fileName';
-
-    Dio dio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(minutes: 5),
-    ));
-
-    int lastProgress = 0;
-    int lastReceived = 0;
-    DateTime lastTime = DateTime.now();
-
-    await dio.download(
-      preferredUrl,
-      savePath,
-      options: Options(
-        responseType: ResponseType.bytes,
-        followRedirects: true,
-      ),
-      onReceiveProgress: (received, total) {
-        if (total != -1) {
-          final progress = ((received / total) * 100).toInt();
-
-          // Throttle UI updates: only update every 5%
-          if (progress - lastProgress >= 5) {
-            lastProgress = progress;
-            setState(() {
-              _downloadProgress[videoId] = received / total;
-            });
-          }
-
-          // Debugging: Print download speed (optional)
-          final now = DateTime.now();
-          final elapsed = now.difference(lastTime).inSeconds;
-          if (elapsed >= 1) {
-            final speed = ((received - lastReceived) / 1024 / elapsed).toStringAsFixed(2);
-            print("Download speed: $speed KB/s");
-
-            lastReceived = received;
-            lastTime = now;
-          }
-        }
-      },
-    );
-
-    final file = File(savePath);
-    if (!await file.exists() || await file.length() == 0) {
-      throw Exception("Downloaded file invalid or corrupted");
+  Future<void> _downloadVideo(OnlineClassesModel video) async {
+    final preferredUrl = _getPreferredVideoUrl(video);
+    if (preferredUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("No valid video URL found for download"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
 
+    final videoName = video.videoName ?? "UnknownVideo";
+    final fileName = "$videoName.mp4";
+    final videoId = video.videoId ?? "unknown_id";
+
     setState(() {
-      _downloadProgress.remove(videoId);
+      _downloadProgress[videoId] = 0.0;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("'$videoName' downloaded successfully!"),
-        backgroundColor: Colors.green,
-      ),
-    );
+    try {
+      final Directory appDocDir = await getApplicationDocumentsDirectory();
+      final String savePath = '${appDocDir.path}/$fileName';
 
-    print("✅ File downloaded to: $savePath");
-  } catch (e) {
-    setState(() {
-      _downloadProgress.remove(videoId);
-    });
+      Dio dio = Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(minutes: 5),
+      ));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Download failed: $e"),
-        backgroundColor: Colors.red,
-      ),
-    );
+      int lastProgress = 0;
+      int lastReceived = 0;
+      DateTime lastTime = DateTime.now();
 
-    print("❌ Download error: $e");
+      await dio.download(
+        preferredUrl,
+        savePath,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: true,
+        ),
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            final progress = ((received / total) * 100).toInt();
+
+            if (progress - lastProgress >= 5) {
+              lastProgress = progress;
+              setState(() {
+                _downloadProgress[videoId] = received / total;
+              });
+            }
+
+            final now = DateTime.now();
+            final elapsed = now.difference(lastTime).inSeconds;
+            if (elapsed >= 1) {
+              final speed =
+                  ((received - lastReceived) / 1024 / elapsed).toStringAsFixed(2);
+              print("Download speed: $speed KB/s");
+
+              lastReceived = received;
+              lastTime = now;
+            }
+          }
+        },
+      );
+
+      final file = File(savePath);
+      if (!await file.exists() || await file.length() == 0) {
+        throw Exception("Downloaded file invalid or corrupted");
+      }
+
+      setState(() {
+        _downloadProgress.remove(videoId);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("'$videoName' downloaded successfully!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      print("✅ File downloaded to: $savePath");
+    } catch (e) {
+      setState(() {
+        _downloadProgress.remove(videoId);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Download failed: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+
+      print("❌ Download error: $e");
+    }
   }
-}
 
-  // Navigate to video player based on download status and URL type
   void _playVideo(OnlineClassesModel video, String? downloadedPath) {
     final preferredUrl = _getPreferredVideoUrl(video);
 
@@ -204,8 +190,7 @@ class _OnlineClasses extends State<OnlineClasses> {
     }
 
     if (downloadedPath != null) {
-      // Play downloaded video
-      print("Playing downloaded video:sk $downloadedPath");
+      print("Playing downloaded video: $downloadedPath");
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -214,7 +199,6 @@ class _OnlineClasses extends State<OnlineClasses> {
         ),
       );
     } else if (_isYouTubeUrl(preferredUrl)) {
-      // Play YouTube video online
       print("Playing YouTube video: $preferredUrl");
       Navigator.push(
         context,
@@ -224,7 +208,6 @@ class _OnlineClasses extends State<OnlineClasses> {
         ),
       );
     } else {
-      // Play non-YouTube video online
       print("Playing online video: $preferredUrl");
       Navigator.push(
         context,
@@ -270,113 +253,92 @@ class _OnlineClasses extends State<OnlineClasses> {
             return materials.isEmpty
                 ? const Center(child: Text("No Data Found"))
                 : Column(
-              children: [
-                Flexible(
-                  child: ListView.builder(
-                    itemCount: materials.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final video = materials[index];
-                      final preferredUrl = _getPreferredVideoUrl(video);
-                      final isDownloadable = _isDownloadable(video);
+                    children: [
+                      Flexible(
+                        child: ListView.builder(
+                          itemCount: materials.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final video = materials[index];
+                            final preferredUrl = _getPreferredVideoUrl(video);
+                            final isDownloadable = _isDownloadable(video);
 
-                      return FutureBuilder<String?>(
-                        future: _getDownloadedVideoPath(video.videoName!),
-                        builder: (context, snapshot) {
-                          final isDownloaded =
-                              snapshot.hasData && snapshot.data != null;
-                          final downloadProgress =
-                          _downloadProgress[video.videoId ?? "unknown_id"];
+                            return FutureBuilder<String?>(
+                              future: _getDownloadedVideoPath(video.videoName!),
+                              builder: (context, snapshot) {
+                                final isDownloaded =
+                                    snapshot.hasData && snapshot.data != null;
+                                final downloadProgress =
+                                    _downloadProgress[video.videoId ?? "unknown_id"];
 
-                          return Card(
-                            child: InkWell(
-                              onTap: () {
-                                _playVideo(video, snapshot.data);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                child: Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    // Video icon with YouTube indicator
-                                    Column(
-                                      children: [
-                                        const Icon(Icons.play_circle, size: 30),
-                                        // if (preferredUrl != null && _isYouTubeUrl(preferredUrl))
-                                        //   Container(
-                                        //     margin: const EdgeInsets.only(top: 2),
-                                        //     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                        //     decoration: BoxDecoration(
-                                        //       color: Colors.red,
-                                        //       borderRadius: BorderRadius.circular(4),
-                                        //     ),
-                                        //     child: const Text(
-                                        //       "YT",
-                                        //       style: TextStyle(
-                                        //         color: Colors.white,
-                                        //         fontSize: 8,
-                                        //         fontWeight: FontWeight.bold,
-                                        //       ),
-                                        //     ),
-                                        //   ),
-                                      ],
-                                    ),
-
-                                    // Video name
-                                    SizedBox(
-                                      width: MediaQuery.of(context).size.width * 0.5,
-                                      child: Text(
-                                        video.videoName!,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18),
-                                        overflow: TextOverflow.ellipsis,
+                                return Card(
+                                  child: InkWell(
+                                    onTap: () {
+                                      _playVideo(video, snapshot.data);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Column(
+                                            children: const [
+                                              Icon(Icons.play_circle, size: 30),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            width: MediaQuery.of(context).size.width *
+                                                0.5,
+                                            child: Text(
+                                              video.videoName!,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          if (downloadProgress != null)
+                                            SizedBox(
+                                              width: 50,
+                                              height: 50,
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  CircularProgressIndicator(
+                                                      value: downloadProgress),
+                                                  Text(
+                                                      "${(downloadProgress * 100).toStringAsFixed(0)}%"),
+                                                ],
+                                              ),
+                                            )
+                                          else if (isDownloaded)
+                                            const Icon(Icons.check_circle,
+                                                color: Colors.green, size: 30)
+                                          else if (isDownloadable)
+                                            IconButton(
+                                              icon: const Icon(Icons.download),
+                                              onPressed: () => _downloadVideo(video),
+                                              tooltip: "Download Video",
+                                            )
+                                          else
+                                            const Icon(Icons.online_prediction,
+                                                color: Colors.grey,
+                                                size: 30,
+                                                //tooltip: "YouTube Video - Online Only"
+                                                ),
+                                        ],
                                       ),
                                     ),
-
-                                    const Spacer(),
-
-                                    // Download progress or status indicator
-                                    if (downloadProgress != null)
-                                      SizedBox(
-                                        width: 50,
-                                        height: 50,
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            CircularProgressIndicator(
-                                                value: downloadProgress),
-                                            Text(
-                                                "${(downloadProgress * 100).toStringAsFixed(0)}%"),
-                                          ],
-                                        ),
-                                      )
-                                    else if (isDownloaded)
-                                      const Icon(Icons.check_circle,
-                                          color: Colors.green, size: 30)
-                                    else if (isDownloadable)
-                                        IconButton(
-                                          icon: const Icon(Icons.download),
-                                          onPressed: () => _downloadVideo(video),
-                                          tooltip: "Download Video",
-                                        )
-                                      else
-                                        const Icon(Icons.cloud,
-                                            color: Colors.grey, size: 30,
-                                            //tooltip: "YouTube Video - Online Only"
-                                        ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
           }
         },
       ),
@@ -397,6 +359,9 @@ class _DownloadedVideosPageState extends State<DownloadedVideosPage> {
   late VideoPlayerController _videoPlayerController;
   bool _isInitialized = false;
   bool _isPlaying = false;
+  double _currentPosition = 0.0;
+  double _videoDuration = 0.0;
+  double _playbackSpeed = 1.0;
 
   @override
   void initState() {
@@ -413,6 +378,19 @@ class _DownloadedVideosPageState extends State<DownloadedVideosPage> {
 
       _videoPlayerController = VideoPlayerController.file(file);
       await _videoPlayerController.initialize();
+
+      _videoDuration =
+          _videoPlayerController.value.duration.inMilliseconds.toDouble();
+
+      _videoPlayerController.addListener(() {
+        final position =
+            _videoPlayerController.value.position.inMilliseconds.toDouble();
+        if (mounted) {
+          setState(() {
+            _currentPosition = position;
+          });
+        }
+      });
 
       setState(() {
         _isInitialized = true;
@@ -434,17 +412,32 @@ class _DownloadedVideosPageState extends State<DownloadedVideosPage> {
   }
 
   void _playVideo() {
+    _videoPlayerController.setPlaybackSpeed(_playbackSpeed);
+    _videoPlayerController.play();
     setState(() {
-      _videoPlayerController.play();
       _isPlaying = true;
     });
   }
 
   void _pauseVideo() {
+    _videoPlayerController.pause();
     setState(() {
-      _videoPlayerController.pause();
       _isPlaying = false;
     });
+  }
+
+  void _changePlaybackSpeed(double speed) {
+    setState(() {
+      _playbackSpeed = speed;
+    });
+    _videoPlayerController.setPlaybackSpeed(speed);
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    final twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
   }
 
   @override
@@ -455,25 +448,72 @@ class _DownloadedVideosPageState extends State<DownloadedVideosPage> {
       ),
       body: Center(
         child: _isInitialized
-            ? AspectRatio(
-          aspectRatio: _videoPlayerController.value.aspectRatio,
-          child: VideoPlayer(_videoPlayerController),
-        )
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AspectRatio(
+                    aspectRatio: _videoPlayerController.value.aspectRatio,
+                    child: VideoPlayer(_videoPlayerController),
+                  ),
+                  const SizedBox(height: 16, ),
+                  // Progress Slider
+                  Row(
+                    children: [
+                      Text(_formatDuration(_videoPlayerController.value.position)),
+                      Expanded(
+                        child: Slider(
+                          value: _currentPosition,
+                          max: _videoDuration,
+                          min: 0,
+                          onChanged: (value) {
+                            setState(() {
+                              _currentPosition = value;
+                            });
+                          },
+                          onChangeEnd: (value) {
+                            _videoPlayerController
+                                .seekTo(Duration(milliseconds: value.toInt()));
+                          },
+                        ),
+                      ),
+                      Text(_formatDuration(_videoPlayerController.value.duration)),
+                    ],
+                  ),
+                  // Playback Speed Controls
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var speed in [0.5, 1.0, 1.5, 2.0])
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: ElevatedButton(
+                            onPressed: () => _changePlaybackSpeed(speed),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  _playbackSpeed == speed ? Colors.blue : Colors.grey,
+                            ),
+                            child: Text("${speed}x"),
+                          ),
+                        )
+                    ],
+                  ),
+                ],
+              )
             : const CircularProgressIndicator(),
       ),
       floatingActionButton: _isInitialized
           ? FloatingActionButton(
-        onPressed: () {
-          if (_isPlaying) {
-            _pauseVideo();
-          } else {
-            _playVideo();
-          }
-        },
-        child: Icon(
-          _isPlaying ? Icons.pause : Icons.play_arrow,
-        ),
-      )
+              onPressed: () {
+                if (_isPlaying) {
+                  _pauseVideo();
+                } else {
+                  _playVideo();
+                }
+              },
+              child: Icon(
+                _isPlaying ? Icons.pause : Icons.play_arrow,
+              ),
+            )
           : null,
     );
   }

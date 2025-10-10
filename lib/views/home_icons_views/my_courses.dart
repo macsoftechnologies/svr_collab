@@ -31,18 +31,34 @@ class _MyCoursesState extends State<MyCourses> {
     _fetchCourses();
   }
 
-  Future<void> _fetchCourses() async {
-    // Clear previously fetched data so the page reloads the courses
-    final viewModel = Provider.of<StudyMaterialViewModel>(context, listen: false);
-    setState(() {
-      // Trigger re-fetch by clearing previous courses data (if any)
-      viewModel.myCourse.clear();
-    });
+ Future<void> _fetchCourses() async {
+  final viewModel = Provider.of<StudyMaterialViewModel>(context, listen: false);
 
-    if (!viewModel.fetchingData) {
-      await viewModel.fetchCourse(userId); // Fetch the courses for the user
+  // Avoid re-fetching if already fetching
+  if (viewModel.fetchingData) return;
+
+  try {
+  
+    viewModel.myCourse.clear();
+
+    // Fetch new course data
+    await viewModel.fetchCourse(userId);
+
+    // Optionally: You could handle cases where no data is fetched
+    if (viewModel.myCourse.isEmpty) {
+      print('No courses found for this user.');
+      // Optionally show a SnackBar or dialog here
     }
+  } catch (e) {
+    print('Failed to fetch courses: $e');
+
+    // Optionally: Show an error message to the user
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(content: Text('Failed to load courses. Please try again.')),
+    // );
   }
+}
+
 
   Future<void> showChoiceDialog(BuildContext context, String courseId, String courseName) async {
     return showDialog<void>(
