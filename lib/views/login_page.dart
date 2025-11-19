@@ -208,103 +208,169 @@ void initState() {
 
 
 
-  loginValidation() async {
-    RegExp numberCheck = RegExp(r'^-?[0-9]+$');
-    String? deviceId = await getDeviceId();
-    var pattern =
-        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-    RegExp regex = RegExp(pattern);
-    if (emailmobile.text.isEmpty) {
-      SnackBarsList().errorSnackBar(context, "Please Enter Email / Phone Number");
-    } else if (password.text.isEmpty) {
-      SnackBarsList().errorSnackBar(context, "Please Enter Password");
-    } else if(deviceId == null){
-       SnackBarsList().errorSnackBar(context, "Device Id is Missing");
-    }else{
-      if (numberCheck.hasMatch(emailmobile.text[0].toString())) {
-        if (emailmobile.text.length != 10 || emailmobile.text.toString().contains(RegExp(r'[a-z]'))) {
-          SnackBarsList().errorSnackBar(context, "Please Enter Valid Phone Number");
-        } else {
-          if (regex.hasMatch(emailmobile.text.toString())) {
-            try {
-              print('i am in Login');
-              print('Name ${emailmobile.text}');
-              print('Name ${password.text}');
-              print('Device Id ${deviceId}');
-              //print('Name ${}');
-              LoginViewModel loginViewModel = LoginViewModel();
-              await loginViewModel.fetchLoginData(emailmobile.text, password.text, deviceId);
+//   loginValidation() async {
+//     RegExp numberCheck = RegExp(r'^-?[0-9]+$');
+//     String? deviceId = await getDeviceId();
+//     var pattern =
+//         r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+//     RegExp regex = RegExp(pattern);
+//     if (emailmobile.text.isEmpty) {
+//       SnackBarsList().errorSnackBar(context, "Please Enter Email / Phone Number");
+//     } else if (password.text.isEmpty) {
+//       SnackBarsList().errorSnackBar(context, "Please Enter Password");
+//     } else if(deviceId == null){
+//        SnackBarsList().errorSnackBar(context, "Device Id is Missing");
+//     }else{
+//       if (numberCheck.hasMatch(emailmobile.text[0].toString())) {
+//         if (emailmobile.text.length != 10 || emailmobile.text.toString().contains(RegExp(r'[a-z]'))) {
+//           SnackBarsList().errorSnackBar(context, "Please Enter Valid Phone Number");
+//         } else {
+//           if (regex.hasMatch(emailmobile.text.toString())) {
+//             try {
+//               print('i am in Login');
+//               print('Name ${emailmobile.text}');
+//               print('Name ${password.text}');
+//               print('Device Id ${deviceId}');
+//               //print('Name ${}');
+//               LoginViewModel loginViewModel = LoginViewModel();
+//               await loginViewModel.fetchLoginData(emailmobile.text, password.text, deviceId);
 
-              Map<String, dynamic> data = loginViewModel.loginData;
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              prefs.setBool('isLoggedIn', true);
-              String encodedMap = json.encode(data);
-              userId = data['user_id'];
-              userName = data['name'];
-              userEmail = data['email'];
-              userMobileNumber = data['mobile_number'];
-              userCourseId = data['course_id'];
-              prefs.setString('userData', encodedMap);
-                String? userDeviceIdFromServer = data['device_id']; // <- This might be null
+//               Map<String, dynamic> data = loginViewModel.loginData;
+//               SharedPreferences prefs = await SharedPreferences.getInstance();
+//               prefs.setBool('isLoggedIn', true);
+//               String encodedMap = json.encode(data);
+//               userId = data['user_id'];
+//               userName = data['name'];
+//               userEmail = data['email'];
+//               userMobileNumber = data['mobile_number'];
+//               userCourseId = data['course_id'];
+//               prefs.setString('userData', encodedMap);
+//                 String? userDeviceIdFromServer = data['device_id']; // <- This might be null
 
-    print("✅ User Device ID from server: $userDeviceIdFromServer");
-              //  prefs.setString('userData', encodedMap);
+//     print("✅ User Device ID from server: $userDeviceIdFromServer");
+//               //  prefs.setString('userData', encodedMap);
 
-// Set login status to true
+// // Set login status to true
 
-             Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => HomeScreen(
+//              Navigator.pushReplacement(
+//       context,
+//       MaterialPageRoute(
+//         builder: (BuildContext context) => HomeScreen(
        
-        ),
-      ),
-    );
-              SnackBarsList().successSnackBar(context, "Login Success");
-            } catch (e) {
-              SnackBarsList().errorSnackBar(context, "Login Failed...\nPlease Enter Proper Details");
-            }
-          } else {
-            SnackBarsList().errorSnackBar(context, "Please Enter Valid Email Address");
-          }
+//         ),
+//       ),
+//     );
+//               SnackBarsList().successSnackBar(context, "Login Success");
+//             } catch (e) {
+//               SnackBarsList().errorSnackBar(context, "Login Failed...\nPlease Enter Proper Details");
+//             }
+//           } else {
+//             SnackBarsList().errorSnackBar(context, "Please Enter Valid Email Address");
+//           }
 
        
-        }
-      } else {
-        if (regex.hasMatch(emailmobile.text.toString())) {
-          try {
-            LoginViewModel loginViewModel = LoginViewModel();
-            await loginViewModel.fetchLoginData(emailmobile.text, password.text, deviceId);
-            Map<String, dynamic> data = loginViewModel.loginData;
-            SharedPreferences prefs = await SharedPreferences.getInstance();
-            String encodedMap = json.encode(data);
-            userId = data['user_id'];
-            userName = data['name'];
-            userEmail = data['email'];
-            userMobileNumber = data['mobile_number'];
-            userCourseId = data['course_id'];
-            prefs.setString('userData', encodedMap);
-            String? userDeviceIdFromServer = data['device_id']; // <- This might be null
+//         }
+//       } else {
+//         if (regex.hasMatch(emailmobile.text.toString())) {
+//           try {
+//             LoginViewModel loginViewModel = LoginViewModel();
+//             await loginViewModel.fetchLoginData(emailmobile.text, password.text, deviceId);
+//             Map<String, dynamic> data = loginViewModel.loginData;
+//             SharedPreferences prefs = await SharedPreferences.getInstance();
+//             String encodedMap = json.encode(data);
+//             userId = data['user_id'];
+//             userName = data['name'];
+//             userEmail = data['email'];
+//             userMobileNumber = data['mobile_number'];
+//             userCourseId = data['course_id'];
+//             prefs.setString('userData', encodedMap);
+//             String? userDeviceIdFromServer = data['device_id']; // <- This might be null
 
-    print("✅ User Device ID from server: $userDeviceIdFromServer");
-            Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => HomeScreen(
+//     print("✅ User Device ID from server: $userDeviceIdFromServer");
+//             Navigator.pushReplacement(
+//       context,
+//       MaterialPageRoute(
+//         builder: (BuildContext context) => HomeScreen(
     
-        ),
-      ),
-    );
-            SnackBarsList().successSnackBar(context, "Login Success");
-          } catch (e) {
-            SnackBarsList().errorSnackBar(context, "Login Failed...\nPlease Enter Proper Details");
-          }
-        } else {
-          SnackBarsList().errorSnackBar(context, "Please Enter Valid Email Address");
-        }
-      }
-    }
+//         ),
+//       ),
+//     );
+//             SnackBarsList().successSnackBar(context, "Login Success");
+//           } catch (e) {
+//             SnackBarsList().errorSnackBar(context, "Login Failed...\nPlease Enter Proper Details");
+//           }
+//         } else {
+//           SnackBarsList().errorSnackBar(context, "Please Enter Valid Email Address");
+//         }
+//       }
+//     }
+//   }
+// }
+
+Future<void> loginValidation() async {
+  RegExp emailRegex = RegExp(
+      r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
+
+  String input = emailmobile.text.trim();
+  String pass = password.text.trim();
+  String? deviceId = await getDeviceId();
+
+  // Basic validation
+  if (input.isEmpty) {
+    return SnackBarsList().errorSnackBar(
+        context, "Please Enter Email / Phone Number");
   }
+
+  if (pass.isEmpty) {
+    return SnackBarsList().errorSnackBar(context, "Please Enter Password");
+  }
+
+  if (deviceId == null) {
+    return SnackBarsList().errorSnackBar(context, "Device Id is Missing");
+  }
+
+  bool isPhone = RegExp(r'^[0-9]+$').hasMatch(input) && input.length == 10;
+  bool isEmail = emailRegex.hasMatch(input);
+
+  // Final input validation
+  if (!isPhone && !isEmail) {
+    return SnackBarsList().errorSnackBar(
+        context, "Enter a valid Email or 10-digit Phone Number");
+  }
+
+  try {
+    print("Logging in with: $input");
+    print("Password: $pass");
+    print("Device ID: $deviceId");
+
+    LoginViewModel loginViewModel = LoginViewModel();
+    await loginViewModel.fetchLoginData(input, pass, deviceId);
+
+    Map<String, dynamic> data = loginViewModel.loginData;
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLoggedIn', true);
+    prefs.setString('userData', json.encode(data));
+
+    userId = data['user_id'];
+    userName = data['name'];
+    userEmail = data['email'];
+    userMobileNumber = data['mobile_number'];
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => HomeScreen()),
+    );
+
+    SnackBarsList().successSnackBar(context, "Login Successful");
+
+  } catch (e) {
+    SnackBarsList().errorSnackBar(
+        context, "Login Failed.\nPlease Enter Proper Details");
+  }
+}
+
+
 }
 
 

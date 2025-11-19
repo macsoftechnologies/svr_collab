@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart';
 import 'package:svr/models/home_icons_models/materials_model.dart';
+import 'package:svr/models/home_icons_models/new_profile_model.dart';
 import 'package:svr/models/home_icons_models/offline_model.dart';
 import 'package:svr/models/home_icons_models/online_classes_model.dart';
 import 'package:svr/models/home_icons_models/profile_model.dart';
@@ -24,6 +25,21 @@ class Repositories {
   }
 
   Repositories._internal();
+
+
+
+  Future<Result?> getNewUserProfile() async {
+  Response response = await WebService().getUserProfileDetails(userId);
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final GetNewProfileModel profile = GetNewProfileModel.fromJson(jsonResponse);
+    return profile.result; 
+  } else {
+    throw Exception('Failed to Load User Profile Details');
+  }
+}
+
 
 
  Future<List<resendOTPmodel>> resendOTPfn()async {

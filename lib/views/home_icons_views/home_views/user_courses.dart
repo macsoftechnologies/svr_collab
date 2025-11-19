@@ -43,35 +43,45 @@ class _UserCoursesView extends State<UserCoursesView> {
       body: myCoursesData == null ? Container(
           child: Column(
           children: [
-
-
           const LinearProgressIndicator(),
             SizedBox(height: 30,),
             Text("Please select your courses in my courses page"),
         ]
       ), ): Card(
-        child: InkWell(
-          onTap: (){
-            Navigator.push(
+      
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(10),
+            child:  Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  style: ButtonStyle(
+                   backgroundColor: MaterialStateProperty.all<Color>(Colors.green)
+
+                  ),
+                  onPressed: (){
+                     Navigator.push(
               context,
               MaterialPageRoute (
                 builder: (BuildContext context) => SubjectsView(type : widget.type,courseId:courseId),//myCoursesData?["course_id"]),
               ),
             );
-          },
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            margin: const EdgeInsets.all(10),
-            padding: const EdgeInsets.all(10),
-            child: Text("${courseName}",
+                }, child: Text('click here', style: TextStyle(color: Colors.white),)),
+                       Text("${courseName}",
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                   color: blackColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 16
               ),textAlign: TextAlign.center,),
+              ],
+            )
+            
+        
           ),
-        ),
+        
       ),
     );
   }

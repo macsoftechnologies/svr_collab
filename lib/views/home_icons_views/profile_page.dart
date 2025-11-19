@@ -1,9 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:http/http.dart'; // for API calls
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart'; // for API calls
+import 'package:svr/models/home_icons_models/new_profile_model.dart';
 import 'package:svr/models/home_icons_models/profile_model.dart';
 import 'package:svr/models/home_icons_models/user_payments_model.dart';
 import 'package:svr/utils/colors.dart';
@@ -11,7 +11,7 @@ import 'package:svr/utils/common_widgets.dart';
 import 'package:svr/utils/global_keys.dart';
 import 'package:svr/view_models/home_icons_view_models/profile_view_model.dart';
 import 'package:svr/views/login_page.dart';
-import 'package:svr/services/web_service.dart'; // assuming you have this for API calls
+import 'package:svr/services/web_service.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -22,38 +22,57 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   List<PaymentDetails> paymentDetailsList = [];
-bool isLoadingPayment = true;
+  bool isLoadingPayment = true;
+  Result? profileResult;
 
   @override
   void initState() {
     super.initState();
-    // Fetch payment info when screen loads
+    _fetchUserProfileDetails();
     _fetchPaymentDetails();
   }
-Future<void> _fetchPaymentDetails() async {
-  try {
-    Response response = await WebService().getUserPaymentDetails(userId);
-    if (response.statusCode == 200) {
-      final jsonResp = json.decode(response.body);
-      final List<dynamic> detailsJson = jsonResp['paymentDetails'];
-      if (detailsJson.isNotEmpty) {
-        setState(() {
-          paymentDetailsList =
-              detailsJson.map((e) => PaymentDetails.fromJson(e)).toList();
-        });
-      }
-    } else {
-      throw Exception("Failed to load payment details");
-    }
-  } catch (e) {
-    print("Error fetching payment details: $e");
-  } finally {
-    setState(() {
-      isLoadingPayment = false;
-    });
-  }
-}
 
+  Future<void> _fetchUserProfileDetails() async {
+    try {
+      Response response = await WebService().getUserProfileDetails(userId);
+      if (response.statusCode == 200) {
+        final jsonresponse = json.decode(response.body);
+        if (jsonresponse['result'] != null) {
+          setState(() {
+            profileResult = Result.fromJson(jsonresponse['result']);
+          });
+        }
+      } else {
+        throw Exception('Failed to load user profile details!');
+      }
+    } catch (e) {
+      print('Error fetching user details: $e');
+    }
+  }
+
+  Future<void> _fetchPaymentDetails() async {
+    try {
+      Response response = await WebService().getUserPaymentDetails(userId);
+      if (response.statusCode == 200) {
+        final jsonResp = json.decode(response.body);
+        final List<dynamic> detailsJson = jsonResp['paymentDetails'];
+        if (detailsJson.isNotEmpty) {
+          setState(() {
+            paymentDetailsList =
+                detailsJson.map((e) => PaymentDetails.fromJson(e)).toList();
+          });
+        }
+      } else {
+        throw Exception("Failed to load payment details");
+      }
+    } catch (e) {
+      print("Error fetching payment details: $e");
+    } finally {
+      setState(() {
+        isLoadingPayment = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,71 +88,66 @@ Future<void> _fetchPaymentDetails() async {
 
           if (viewModel.fetchData) {
             return const Center(child: CircularProgressIndicator());
-          } else {
-            ProfileModel? profileInfo = viewModel.getProfileInfo;
-            if (profileInfo == null || profileInfo.userId?.isEmpty == true) {
-              return const Center(child: Text("No Data Found"));
-            }
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ClipOval(
-                    child: SizedBox.fromSize(
-                      size: const Size.fromRadius(58),
-                      child: Image.asset('assets/logo.jpeg', fit: BoxFit.cover),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Profile Info",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  _buildInfoCard(profileInfo),
-                  const SizedBox(height: 10),
-                  _buildAdditionalInfoCard(profileInfo),
-                  const SizedBox(height: 10),
-
-                  // Payment section
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Payment Info",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-               if (isLoadingPayment)
-  const CircularProgressIndicator()
-else if (paymentDetailsList.isNotEmpty)
-  Column(
-    children: paymentDetailsList
-        .map((e) => buildPaymentDetailsCard(e))
-        .toList(),
-  )
-else
-  const Text("No payment details found."),
-
-
-                  const SizedBox(height: 20),
-                  _buildActionsCard(),
-
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: logout,
-                    child: const Text("Logout"),
-                  ),
-                ],
-              ),
-            );
           }
+
+          final profileInfo = viewModel.getProfileInfo;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipOval(
+                  child: SizedBox.fromSize(
+                    size: const Size.fromRadius(58),
+                    child: Image.asset('assets/logo.jpeg', fit: BoxFit.cover),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Profile Info",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (profileResult != null)
+                  _buildInfoCard(profileResult!)
+                else
+                  const Text("No profile info found"),
+                const SizedBox(height: 10),
+                if (profileInfo != null)
+                  // _buildAdditionalInfoCard(profileInfo),
+                const SizedBox(height: 10),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Payment Info",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (isLoadingPayment)
+                  const CircularProgressIndicator()
+                else if (paymentDetailsList.isNotEmpty)
+                  Column(
+                    children: paymentDetailsList
+                        .map((e) => buildPaymentDetailsCard(e))
+                        .toList(),
+                  )
+                else
+                  const Text("No payment details found."),
+                const SizedBox(height: 20),
+                _buildActionsCard(),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: logout,
+                  child: const Text("Logout"),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
@@ -150,17 +164,9 @@ else
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Payment ID", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
                   Text("Transaction ID", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
                   Text("Course Name", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text("Amount", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text("Status", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text("Created At", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -169,17 +175,9 @@ else
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(":  ${paymentInfo.paymentId ?? ""}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
                   Text(":  ${paymentInfo.transactionId ?? ""}", overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 10),
                   Text(":  ${paymentInfo.courseName ?? ""}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
-                  Text(":  ₹${paymentInfo.amount ?? "0"}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
-                  Text(":  ${paymentInfo.status ?? "Unknown"}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
-                  Text(":  ${paymentInfo.createdAt ?? ""}", overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -189,7 +187,7 @@ else
     );
   }
 
-  Widget _buildInfoCard(ProfileModel profileInfo) {
+  Widget _buildInfoCard(Result profileInfo) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -202,13 +200,13 @@ else
                 children: [
                   Text("Name", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
-                  Text("Father Name", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
                   Text("Mobile Number", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
                   Text("Email", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
-                  Text("Address", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text("Password",style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold) ),
+                  SizedBox(height: 10),
+                  Text("Joined Date", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -219,13 +217,13 @@ else
                 children: [
                   Text(":  ${profileInfo.name ?? ""}", overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 10),
-                  Text(":  ${profileInfo.fathername ?? ""}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
                   Text(":  ${profileInfo.mobileNumber ?? ""}", overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 10),
                   Text(":  ${profileInfo.email ?? ""}", overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 10),
-                  Text(":  ${profileInfo.address ?? ""}", overflow: TextOverflow.ellipsis),
+                  Text(":  ${profileInfo.password ?? ""}", overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 10),
+                  Text(":  ${profileInfo.joinedDate ?? ""}", overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -235,51 +233,51 @@ else
     );
   }
 
-  Widget _buildAdditionalInfoCard(ProfileModel profileInfo) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 4,
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("DOB", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text("Hall Ticket No", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text("Gender", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text("Course ID", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text("Remarks", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 6,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(":  ${profileInfo.dob ?? ""}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
-                  Text(":  ${profileInfo.hallticketno ?? ""}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
-                  Text(":  ${profileInfo.gender ?? ""}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
-                  Text(":  ${profileInfo.courseId ?? ""}", overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 10),
-                  Text(":  ${profileInfo.remark ?? ""}", overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildAdditionalInfoCard(ProfileModel profileInfo) {
+  //   return Card(
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(10),
+  //       child: Row(
+  //         children: [
+  //           Expanded(
+  //             flex: 4,
+  //             child: const Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text("DOB", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+  //                 SizedBox(height: 10),
+  //                 Text("Hall Ticket No", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+  //                 SizedBox(height: 10),
+  //                 Text("Gender", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+  //                 SizedBox(height: 10),
+  //                 Text("Course ID", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+  //                 SizedBox(height: 10),
+  //                 Text("Remarks", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+  //               ],
+  //             ),
+  //           ),
+  //           Expanded(
+  //             flex: 6,
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(":  ${profileInfo.dob ?? ""}", overflow: TextOverflow.ellipsis),
+  //                 const SizedBox(height: 10),
+  //                 Text(":  ${profileInfo.hallticketno ?? ""}", overflow: TextOverflow.ellipsis),
+  //                 const SizedBox(height: 10),
+  //                 Text(":  ${profileInfo.gender ?? ""}", overflow: TextOverflow.ellipsis),
+  //                 const SizedBox(height: 10),
+  //                 Text(":  ${profileInfo.courseId ?? ""}", overflow: TextOverflow.ellipsis),
+  //                 const SizedBox(height: 10),
+  //                 Text(":  ${profileInfo.remark ?? ""}", overflow: TextOverflow.ellipsis),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildActionsCard() {
     return Card(
@@ -303,12 +301,17 @@ else
               children: [
                 IconButton(
                   onPressed: () {
-                    print('user_id is  $userId');
+                    print('user_id is $userId');
                   },
                   icon: const Icon(Icons.remove_red_eye_rounded),
                 ),
                 const SizedBox(height: 10),
-                IconButton(onPressed: () {}, icon: const Icon(Icons.edit_note_sharp)),
+                IconButton(
+                  onPressed: () {
+                    // Handle profile update here
+                  },
+                  icon: const Icon(Icons.edit_note_sharp),
+                ),
               ],
             ),
           ],
@@ -320,12 +323,9 @@ else
   Future<void> logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('userData');
-
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => const LoginPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const LoginPage()),
     );
   }
 }

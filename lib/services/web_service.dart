@@ -23,6 +23,19 @@ class WebService {
   }
 
 
+Future<Response> getUserProfileDetails(String userId) async{
+  final data = jsonEncode({
+    "user_id" : userId
+  });
+
+  var response = await post(
+    Uri.parse(main_url + newUserDetails ),
+    headers: headers,
+    body: data
+  );
+  return response;
+}
+
 
  Future<Response> getUserPaymentDetails(String userId) async {
   final data = jsonEncode({
