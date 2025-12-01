@@ -1,5 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
@@ -11,6 +16,7 @@ import 'package:svr/view_models/live_courses_view_model.dart';
 import 'package:svr/views/home_icons_views/my_courses.dart';
 import 'package:svr/views/home_icons_views/rewards_page.dart';
 import 'package:svr/views/home_icons_views/test_questions.dart';
+import 'package:svr/views/login_page.dart';
 import '../utils/common_widgets.dart';
 import '../utils/global_keys.dart';
 import '../utils/snackbars_list.dart';
@@ -18,33 +24,117 @@ import 'home_icons_views/home_views/user_courses.dart';
 import 'home_icons_views/profile_page.dart';
 
 class HomeScreen extends StatefulWidget {
+
+
   const HomeScreen({super.key});
 
   @override
-  State<StatefulWidget> createState() => _HomeScreen();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
-
-class _HomeScreen extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   late String courseamount,userid;
   late LiveCoursesModel selectedCourseToPurchase;
+  String? suspenseDeviceId;
+  Timer? _deviceCheckTimer;
+
   // late Razorpay _razorpay;
   Map<String, dynamic> userData = {};
   Razorpay _razorpay = Razorpay();
   @override
   void initState() {
-    // _razorpay = Razorpay();
-    // _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    // _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     // _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
     super.initState();
+
+       checkDeviceChange();
+
+         _deviceCheckTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+    await checkDeviceChange();
+  });
+
+
   }
 
-  @override
-  void dispose() {
-    //_razorpay.clear();
-    super.dispose();
-  }
+Future<void> _handleRefresh() async {
+   checkDeviceChange();
+}
 
+Future<void> checkDeviceChange() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? encodedMap = prefs.getString('userData');
+
+  if (encodedMap == null) return;
+
+  userData = json.decode(encodedMap);
+  userId = userData['user_id'];
+  String savedDeviceId = userData['device_id'];
+
+  // Fetch current device ID from API
+  String? currentDeviceId = await getDeviceIdFromApi();
+
+  if (currentDeviceId != null && savedDeviceId != currentDeviceId) {
+    prefs.clear();
+
+    SnackBarsList().errorSnackBar(
+      context,
+      "You have been logged in on another device.",
+    );
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    }
+  }
+}
+
+Future<String?> getDeviceIdFromApi() async {
+  try {
+    final response = await http.post(
+      Uri.parse('https://svracademy.in/services/users/getuserdetails'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Auth-Key': 'svrapi'
+      },
+      body: jsonEncode({'user_id': userId}), 
+    );
+
+    print('Device API response: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> result = json.decode(response.body);
+
+      if (result['result'] != null && result['result'] is Map<String, dynamic>) {
+        return result['result']['device_id']?.toString(); // safe access
+      } else {
+        print("API response 'result' is null or invalid: $result");
+        return null;
+      }
+    } else {
+      print('API Error: ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    print('Error fetching device ID: $e');
+    return null;
+  }
+}
+
+
+  
+
+
+
+ @override
+void dispose() {
+  _razorpay.clear();
+  _deviceCheckTimer?.cancel(); 
+  super.dispose();
+}
   @override
   Widget build(BuildContext context) {
 
@@ -53,13 +143,25 @@ class _HomeScreen extends State<HomeScreen> {
   }).toList();
     return Scaffold(
         backgroundColor: secondaryColor,
+        
         appBar: CommonWidgets(
+        
+        ).appBar(
+          
+          "SVR ACADEMY",context),
+        
 
-        ).appBar("SVR ACADEMY",context),
 
 
-
-        body: SingleChildScrollView(
+        body:RefreshIndicator(
+      onRefresh: _handleRefresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(), // Needed for pull-to-refresh
+        scrollDirection: Axis.vertical,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+             SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,7 +262,7 @@ class _HomeScreen extends State<HomeScreen> {
                                     userCourseId = selectedCourseToPurchase.courseId.toString();
                                     courseamount = selectedCourseToPurchase.coursePrice!;
 
-                                    createPaymentRequest(userName, userId, amount);
+                                    createPaymentRequest(userName, userId, amount, userEmail, userMobileNumber );
 
                                       // Extract the 'mobile_number'
                                     // Map<String, dynamic> options = {
@@ -295,21 +397,30 @@ class _HomeScreen extends State<HomeScreen> {
               
             ],
           ),
+        )
+          ],
+        ),
+      ),
+        
+        
+        
+        
+        
         ));
   }
 
 
-  createPaymentRequest(String name, String userId, double amount) {
+   createPaymentRequest(String name, String userId, double amount, String email, String userMobileNumber ) {
     var options = {
-      'key': 'rzp_test_0gAUBx3H6twMaj', // Use your Razorpay Test or Live key
+      'key': 'rzp_live_pgxwzTl1qssb4I', // Use your Razorpay Test or Live key
       'amount': (amount).toString(), // Amount in paise
       'name': name,
       'description': 'Course Payment',
       // 'order_id': userId,  // You can use the user ID as the order ID
       // Optional: Timeout in seconds (5 minutes)
       'prefill': {
-        'email': " jjajhaj@gmail.com", // User's email
-        'contact': "8247447102", // User's mobile number
+        'email': email, // User's email
+        'contact': userMobileNumber, // User's mobile number
       },
       'theme': {
         'color': '#ff5e5e',

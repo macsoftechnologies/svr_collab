@@ -27,6 +27,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPage extends State<LoginPage> {
+  
 
 
 
@@ -357,10 +358,13 @@ Future<void> loginValidation() async {
     userEmail = data['email'];
     userMobileNumber = data['mobile_number'];
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => HomeScreen()),
-    );
+   Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) => HomeScreen(),
+  ),
+);
+
 
     SnackBarsList().successSnackBar(context, "Login Successful");
 
@@ -571,56 +575,148 @@ class _SignupCardState extends State<SignupCard> {
               ));
   }
 
-  signUpValidation() async {
-    var pattern =
-        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-    RegExp emailCheck = RegExp(pattern);
-    if (fullname.text.isEmpty) {
-      SnackBarsList().errorSnackBar(context, "Please Enter Full Name");
-    } else if (email.text.isEmpty) {
-      SnackBarsList().errorSnackBar(context, "Please Enter Email");
-    } else if (phoneNumber.text.isEmpty) {
-      SnackBarsList().errorSnackBar(context, "Please Enter Phone Number");
-    } else if (password.text.isEmpty) {
-      SnackBarsList().errorSnackBar(context, "Please Enter Password");
-    } else if (selectedCourse == "") {
-      SnackBarsList().errorSnackBar(context, "Please Select Course");
-    } else {
-      try {
-        RegisterViewModel registerViewModel = RegisterViewModel();
-        await registerViewModel.fetchRegisterData(fullname.text, email.text, phoneNumber.text, password.text, courseid);
-        Map<String, dynamic> data = registerViewModel.registerData;
-        print('vvvvvvvvvvvvvvvvvvvvvvvvvvvvv');
+  // signUpValidation() async {
+  //   var pattern =
+  //       r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+  //   RegExp emailCheck = RegExp(pattern);
+  //   if (fullname.text.isEmpty) {
+  //     SnackBarsList().errorSnackBar(context, "Please Enter Full Name");
+  //   } else if (email.text.isEmpty) {
+  //     SnackBarsList().errorSnackBar(context, "Please Enter Email");
+  //   } else if (phoneNumber.text.isEmpty) {
+  //     SnackBarsList().errorSnackBar(context, "Please Enter Phone Number");
+  //   } else if (password.text.isEmpty) {
+  //     SnackBarsList().errorSnackBar(context, "Please Enter Password");
+  //   } else if (selectedCourse == "") {
+  //     SnackBarsList().errorSnackBar(context, "Please Select Course");
+  //   } else {
+  //     try {
+  //       RegisterViewModel registerViewModel = RegisterViewModel();
+  //       await registerViewModel.fetchRegisterData(fullname.text, email.text, phoneNumber.text, password.text, courseid);
+  //       Map<String, dynamic> data = registerViewModel.registerData;
+  //       print('vvvvvvvvvvvvvvvvvvvvvvvvvvvvv');
 
-        print(data);
-        Map<String, dynamic> userDetails = data['Userdetails']; // Extract user details
+  //       print(data);
+  //       Map<String, dynamic> userDetails = data['Userdetails']; // Extract user details
 
-        String username = userDetails['name']; // Extract the 'name' from the response
-        String userId = userDetails['user_id']; // Extract the 'user_id'
-        String emaill = userDetails['email']; // Extract the 'email'
-        String mobile = userDetails['mobile_number'];
-        // Extract the 'mobile_number'
-        userid = userId;
-        // await createPaymentRequest(courseid, courseamount, emaill, context);
-        double courseAmount = double.parse(selectedCourse!.coursePrice!); //courseamount.toString()); // Example amount, replace with actual course amount
+  //       String username = userDetails['name']; // Extract the 'name' from the response
+  //       String userId = userDetails['user_id']; // Extract the 'user_id'
+  //       String emaill = userDetails['email']; // Extract the 'email'
+  //       String mobile = userDetails['mobile_number'];
+  //       // Extract the 'mobile_number'
+  //       userid = userId;
+  //       // await createPaymentRequest(courseid, courseamount, emaill, context);
+  //       double courseAmount = double.parse(selectedCourse!.coursePrice!); //courseamount.toString()); // Example amount, replace with actual course amount
 
-        //courseamount.toString()); // Example amount, replace with actual course amount
-        createPaymentRequest(username, userId, courseAmount);
+  //       //courseamount.toString()); // Example amount, replace with actual course amount
+  //       createPaymentRequest(username, userId, courseAmount);
 
-        // You can now use this data for navigation or display it
-        SnackBarsList().successSnackBar(context, "Welcome, $username! Your ID: $courseid");
+  //       // You can now use this data for navigation or display it
+  //       SnackBarsList().successSnackBar(context, "Welcome, $username! Your ID: $courseid");
 
    
-      } catch (e) {
-        SnackBarsList().errorSnackBar(context, "Registration Failed...\nPlease Enter Proper Details:$courseid");
-      }
+  //     } catch (e) {
+  //       SnackBarsList().errorSnackBar(context, "Registration Failed...\nPlease Enter Proper Details:$courseid");
+  //     }
   
-    }
+  //   }
+  // }
+
+  signUpValidation() async {
+  var pattern =
+      r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+  RegExp emailCheck = RegExp(pattern);
+
+  // ---------- VALIDATIONS ----------
+  if (fullname.text.isEmpty) {
+    SnackBarsList().errorSnackBar(context, "Please Enter Full Name");
+    return;
+  } 
+  if (email.text.isEmpty) {
+    SnackBarsList().errorSnackBar(context, "Please Enter Email");
+    return;
+  } 
+  if (!emailCheck.hasMatch(email.text)) {
+    SnackBarsList().errorSnackBar(context, "Please Enter Valid Email");
+    return;
   }
+  if (phoneNumber.text.isEmpty) {
+    SnackBarsList().errorSnackBar(context, "Please Enter Phone Number");
+    return;
+  } 
+  if (password.text.isEmpty) {
+    SnackBarsList().errorSnackBar(context, "Please Enter Password");
+    return;
+  }
+  if (selectedCourse == null || selectedCourse == "") {
+    SnackBarsList().errorSnackBar(context, "Please Select Course");
+    return;
+  }
+
+  // ---------- API CALL ----------
+  try {
+    RegisterViewModel registerViewModel = RegisterViewModel();
+    await registerViewModel.fetchRegisterData(
+      fullname.text,
+      email.text,
+      phoneNumber.text,
+      password.text,
+      courseid,
+    );
+
+    Map<String, dynamic> data = registerViewModel.registerData;
+
+    print("========= API RESPONSE =========");
+    print(data);
+print("FULL REGISTER API RESPONSE:");
+print(data);
+
+if (!data.containsKey("Userdetails") || data["Userdetails"] == null) {
+SnackBarsList().errorSnackBar(
+  context,
+  "Registration Failed: ${data["message"] ?? "Unknown error"}"
+);
+
+  return;
+}
+
+
+    Map<String, dynamic> userDetails = data["Userdetails"];
+
+    print("========= USER DETAILS =========");
+    print(userDetails);
+
+    // Safe extraction
+    String username = userDetails["name"] ?? "No Name";
+    String userId = userDetails["user_id"] ?? "0";
+    String userEmail = userDetails["email"] ?? "";
+    String userMobile = userDetails["mobile_number"] ?? "";
+
+    userid = userId;
+
+    // Course amount parsing safely
+    double courseAmount = double.tryParse(selectedCourse!.coursePrice ?? "0") ?? 0;
+
+    // ---------- PAYMENT CALL ----------
+    createPaymentRequest(username, userId, courseAmount);
+
+    SnackBarsList()
+        .successSnackBar(context, "Welcome, $username! Your ID: $userId");
+
+  } catch (e, stacktrace) {
+    print("========= REGISTRATION ERROR =========");
+    print("Error: $e");
+    print("Stacktrace: $stacktrace");
+
+    SnackBarsList()
+        .errorSnackBar(context, "Registration Failed: $e");
+  }
+}
+
 
   createPaymentRequest(String name, String userId, double amount) {
     var options = {
-      'key': 'rzp_test_0gAUBx3H6twMaj', // Use your Razorpay Test or Live key
+      'key': 'rzp_live_pgxwzTl1qssb4I', // Use your Razorpay Test or Live key
       'amount': (amount * 100).toString(), // Amount in paise
       'name': name,
       'description': 'Course Payment',
