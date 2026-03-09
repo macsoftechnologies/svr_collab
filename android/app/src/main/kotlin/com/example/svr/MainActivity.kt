@@ -1,4 +1,4 @@
-package com.example.svr
+package com.svracademy.svr
 
 import io.flutter.embedding.android.FlutterActivity
 

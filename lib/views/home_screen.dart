@@ -167,7 +167,7 @@ void dispose() {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Card(
-                  color: Colors.orange,
+                  color: Colors.green,
                   child: Container(
                     padding: const EdgeInsets.all(10),
                     width: MediaQuery.of(context).size.width,
@@ -182,12 +182,13 @@ void dispose() {
                           height: 10,
                         ),
                         Container(
-                          width: MediaQuery.of(context).size.width,
+                         
+                          width: MediaQuery.of(context).size.width * 0.7,
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(color: secondaryColor, borderRadius: const BorderRadius.all(Radius.circular(20))),
                           child: const Text(
                             "APPSC GROUPS",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -203,22 +204,23 @@ void dispose() {
                     ),
                   )),
               Card(
+              
                 child: Container(
                   padding: const EdgeInsets.all(3),
                   height: 200,
+                  color: Colors.yellow,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Our online Courses ",
+                        "Our Online Courses ",
                         style: TextStyle(
                             decoration: TextDecoration.underline,
-                            decorationThickness: 2,
-                            decorationStyle: TextDecorationStyle.dotted,
-                            color: blackColor,
+                            color: Colors.black,
                             fontWeight: FontWeight.bold,
-                            fontSize: 20),
-                        textAlign: TextAlign.left,
+                            fontSize: 13, ),
+                        textAlign: TextAlign.center,
                       ),
                       Consumer<LiveCoursesViewModel>(builder: (context, viewModel, child) {
                         if (!viewModel.fetchingData && viewModel.liveCourses.isEmpty) {
@@ -231,12 +233,13 @@ void dispose() {
                           // If data is successfully fetched
                           List<LiveCoursesModel> liveCourses = viewModel.liveCourses;
                           return SizedBox(
-                            height: 170,
+                            height: 150,
                             child: ListView.builder(
                               itemCount: liveCourses.length,
                               scrollDirection: Axis.horizontal,
                               itemBuilder: (BuildContext context, int index) {
                                 return InkWell(
+                          
                                   onTap: () async {
                                     //Code to check the course purchased or not
                                     //check the amount
@@ -284,20 +287,24 @@ void dispose() {
                                     //_razorpay.open(options);
                                   },
                                   child: Container(
+                                  
                                     width: 150,
                                     height: 150,
                                     margin: const EdgeInsets.all(10),
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: primaryColor,
+                                      color:  Colors.indigo,
                                       borderRadius: const BorderRadius.all(Radius.circular(20)),
                                     ),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      
                                       children: [
                                         SizedBox.fromSize(
                                           size: const Size.fromRadius(50),
-                                          child: Image.network('${liveCourses[index].courseImage}', fit: BoxFit.cover),
+                                          child: Image.network('${liveCourses[index].courseImage}', fit: BoxFit.contain, ),
+                                          
                                         ),
                                         Text(
                                           "${liveCourses[index].courseName}",
@@ -305,7 +312,8 @@ void dispose() {
                                           style: TextStyle(
                                             color: whiteColor,
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 16,
+                                            fontSize: 7,
+                                            
                                           ),
                                           textAlign: TextAlign.center,
                                         ),
@@ -325,12 +333,14 @@ void dispose() {
 
 
               Container(
+               color: Colors.white60,
                 height: MediaQuery.of(context).size.height / 2.8,
                 alignment: Alignment.center,
                 padding: const EdgeInsets.all(12),
                 child:
                 
                  GridView.builder(
+                
   itemCount: filteredHomeIcons.length,
   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
     crossAxisCount: 3,
@@ -346,11 +356,11 @@ void dispose() {
             context,
             MaterialPageRoute(builder: (context) => const MyCourses()),
           );
-        } else if (iconName == "Tests") {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const TestQuestions()),
-          );
+        // } else if (iconName == "Tests") {
+        //   Navigator.push(
+        //     context,
+        //     MaterialPageRoute(builder: (context) => const TestQuestions()),
+        //   );
         } else if (iconName == "Profile") {
           Navigator.push(
             context,
@@ -364,9 +374,10 @@ void dispose() {
         }
       },
       child: Container(
+      
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: primaryColor,
+          color: Colors.lightBlue[100],
           borderRadius: const BorderRadius.all(Radius.circular(20)),
         ),
         child: Column(
@@ -375,7 +386,7 @@ void dispose() {
           children: [
             Image.asset(
               filteredHomeIcons[index]["img"],
-              height: 80,
+              height: 75,
               width: 80,
             ),
             Text(

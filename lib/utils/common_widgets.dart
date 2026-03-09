@@ -12,16 +12,17 @@ class CommonWidgets
   appBar(text,BuildContext context)
   {
     return AppBar(
-      backgroundColor:primaryColor,
+      backgroundColor:Colors.blue[900],
       title: Text("$text"),
       actions: [
         TextButton(
           onPressed: () {
             logout(context);
           },
-          child: const Text(
+          child:  Text(
             "Logout",
-            style: TextStyle(color: Colors.white, fontSize: 16), // Style the text as needed
+            style: TextStyle(color: Colors.white, fontSize: 16), 
+            
           ),
         ),
       ],

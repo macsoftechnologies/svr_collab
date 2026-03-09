@@ -37,24 +37,29 @@ class _LoginPage extends State<LoginPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: secondaryColor,
+        backgroundColor: Colors.lightBlue[50],
         appBar: AppBar(
           backgroundColor: primaryColor,
+          centerTitle: true,
           title: const Text('Login & Signup'),
+          toolbarHeight: 100,
           bottom: TabBar(
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             labelColor: whiteColor,
             tabs: [
-              Tab(
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.orange,  // Set the background color to orange
-                    borderRadius: BorderRadius.circular(30),  // Rounded corners for button effect
-                  ),
-                  child: Text(
-                    'Login',
-                    style: TextStyle(color: Colors.white),  // Text color
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Tab(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.orange,  // Set the background color to orange
+                      borderRadius: BorderRadius.circular(30),  // Rounded corners for button effect
+                    ),
+                    child: Text(
+                      'Login',
+                      style: TextStyle(color: Colors.white),  // Text color
+                    ),
                   ),
                 ),
               ),
@@ -76,6 +81,7 @@ class _LoginPage extends State<LoginPage> {
           ),
         ),
         body: const TabBarView(
+          
           children: [
             LoginCard(),
             SignupCard(),
@@ -146,7 +152,7 @@ void initState() {
                       decoration: const InputDecoration(labelText: 'Password'),
                       obscureText: true,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 30),
                     loading
                         ? const CircularProgressIndicator()
                         : ElevatedButton(
@@ -185,13 +191,13 @@ void initState() {
               ),
               child: const Text(
                "",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             )),
         Positioned(
 
             right: 30,
-            top: 370,
+            top: 390,
             child: InkWell(
               onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder:(BuildContext context)=> const ForgotPassword())
@@ -199,7 +205,7 @@ void initState() {
                    },
               child: const Text(
                 "Forgot password",
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
               
             )),
@@ -714,6 +720,9 @@ SnackBarsList().errorSnackBar(
 }
 
 
+
+// 
+
   createPaymentRequest(String name, String userId, double amount) {
     var options = {
       'key': 'rzp_live_pgxwzTl1qssb4I', // Use your Razorpay Test or Live key
@@ -723,8 +732,8 @@ SnackBarsList().errorSnackBar(
       // 'order_id': userId,  // You can use the user ID as the order ID
       // Optional: Timeout in seconds (5 minutes)
       'prefill': {
-        'email': " jjajhaj@gmail.com", // User's email
-        'contact': "8247447102", // User's mobile number
+        'email': userEmail??"", // User's email
+        'contact': userMobileNumber??"", // User's mobile number
       },
       'theme': {
         'color': '#ff5e5e',

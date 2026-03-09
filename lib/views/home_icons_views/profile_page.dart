@@ -77,7 +77,7 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: secondaryColor,
+      backgroundColor: Colors.blue[50],
       appBar: CommonWidgets().appBar("Profile", context),
       body: Consumer<ProfileViewModel>(
         builder: (context, viewModel, child) {
@@ -106,9 +106,12 @@ class _ProfileState extends State<Profile> {
                 const SizedBox(height: 20),
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Profile Info",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      "Profile Info",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -122,9 +125,12 @@ class _ProfileState extends State<Profile> {
                 const SizedBox(height: 10),
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Payment Info",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      "Payment Info",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -138,9 +144,9 @@ class _ProfileState extends State<Profile> {
                   )
                 else
                   const Text("No payment details found."),
-                const SizedBox(height: 20),
-                _buildActionsCard(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
+                // _buildActionsCard(),
+              
                 ElevatedButton(
                   onPressed: logout,
                   child: const Text("Logout"),
@@ -164,9 +170,9 @@ class _ProfileState extends State<Profile> {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Transaction ID", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text("Transaction ID", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
-                  Text("Course Name", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text("Course Name", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -198,15 +204,15 @@ class _ProfileState extends State<Profile> {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Name", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text("Name", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
-                  Text("Mobile Number", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text("Mobile Number", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
-                  Text("Email", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text("Email", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   SizedBox(height: 10),
-                  Text("Password",style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold) ),
+                  Text("Password",style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold) ),
                   SizedBox(height: 10),
-                  Text("Joined Date", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                  Text("Joined Date", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -279,46 +285,49 @@ class _ProfileState extends State<Profile> {
   //   );
   // }
 
-  Widget _buildActionsCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Expanded(
-              flex: 6,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("View Hall Ticket", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  Text("Update Profile Info", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-            Column(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    print('user_id is $userId');
-                  },
-                  icon: const Icon(Icons.remove_red_eye_rounded),
-                ),
-                const SizedBox(height: 10),
-                IconButton(
-                  onPressed: () {
-                    // Handle profile update here
-                  },
-                  icon: const Icon(Icons.edit_note_sharp),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _buildActionsCard() {
+  //   return Card(
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(10),
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: [
+
+
+            
+  //           const Expanded(
+  //             flex: 6,
+  //             child: Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 // Text("View Hall Ticket", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+  //                 SizedBox(height: 10),
+  //                 // Text("Update Profile Info", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+  //               ],
+  //             ),
+  //           ),
+  //           Column(
+  //             children: [
+  //               // IconButton(
+  //               //   onPressed: () {
+  //               //     print('user_id is $userId');
+  //               //   },
+  //               //   icon: const Icon(Icons.remove_red_eye_rounded),
+  //               // ),
+  //               // const SizedBox(height: 10),
+  //               // IconButton(
+  //               //   onPressed: () {
+  //               //     // Handle profile update here
+  //               //   },
+  //               //   icon: const Icon(Icons.edit_note_sharp),
+  //               // ),
+  //             ],
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Future<void> logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
