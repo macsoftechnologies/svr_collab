@@ -81,7 +81,6 @@ class _LoginPage extends State<LoginPage> {
           ),
         ),
         body: const TabBarView(
-          
           children: [
             LoginCard(),
             SignupCard(),
@@ -113,12 +112,6 @@ void initState() {
   super.initState();
 
 }
-
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -197,7 +190,7 @@ void initState() {
         Positioned(
 
             right: 30,
-            top: 390,
+            top: 380,
             child: InkWell(
               onTap: () {
                   Navigator.push(context, MaterialPageRoute(builder:(BuildContext context)=> const ForgotPassword())
