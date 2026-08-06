@@ -386,7 +386,7 @@ void dispose() {
           children: [
             Image.asset(
               filteredHomeIcons[index]["img"],
-              height: 75,
+              height: 73,
               width: 80,
             ),
             Text(
