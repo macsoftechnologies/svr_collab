@@ -74,7 +74,7 @@ class _UserCoursesView extends State<UserCoursesView> {
               style: TextStyle(
                   color: blackColor,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16
+                  fontSize: 12
               ),textAlign: TextAlign.center,),
               ],
             )

@@ -70,7 +70,7 @@ class _SubjectsView extends State<SubjectsView>
                                     const Icon(Icons.file_copy_rounded,size: 30,),
                                     SizedBox(
                                       width: MediaQuery.of(context).size.width*0.8,
-                                      child: Text("${subjects[index].subjectName}",style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 20),),
+                                      child: Text("${subjects[index].subjectName}",style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 14),),
                                     )
                                   ],
                                 ),
