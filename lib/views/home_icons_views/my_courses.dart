@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:svr/models/home_icons_models/courses_model.dart';
 import 'package:svr/utils/global_keys.dart';
 import 'package:svr/view_models/home_icons_view_models/studymaterial_view_model.dart';
+import 'package:svr/views/course_subject_screen.dart';
 import 'package:svr/views/home_icons_views/home_views/user_courses.dart';
 import 'package:svr/views/home_icons_views/test_questions.dart';
 import 'package:svr/views/login_page.dart';
@@ -163,9 +164,14 @@ Future<void> showChoiceDialog(
               label: const Text('Tests',),
               onPressed: () {
                 
-                 Navigator.push(
+          //        Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) =>  TestQuestions(courseId: courseId)),
+          // );
+
+                     Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) =>  TestQuestions(courseId: courseId)),
+            MaterialPageRoute(builder: (context) =>  CourseSubjectScreen(courseId: courseId)),
           );
               },
             ),

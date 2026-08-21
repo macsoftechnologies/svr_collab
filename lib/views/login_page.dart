@@ -718,7 +718,7 @@ SnackBarsList().errorSnackBar(
 
   createPaymentRequest(String name, String userId, double amount) {
     var options = {
-      'key': 'rzp_live_pgxwzTl1qssb4I', // Use your Razorpay Test or Live key
+      'key': 'rzp_live_TQoVDQV7mOC1ir', // Use your Razorpay Test or Live key
       'amount': (amount * 100).toString(), // Amount in paise
       'name': name,
       'description': 'Course Payment',

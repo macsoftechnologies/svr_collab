@@ -560,10 +560,10 @@ class _QuestionsView extends State<QuestionsView> {
                         ? ElevatedButton(
                             onPressed: () {
                               _saveAnswer(index, question);
-                              if (answers.length < 15) {
+                              if (answers.length < 1) {
                                 SnackBarsList().errorSnackBar(
                                     context,
-                                    "You must answer at least 15 questions");
+                                    "You must answer at least 1 questions");
                               } else {
                                 _submitBox();
                               }
@@ -649,7 +649,7 @@ void _submitBox() {
               final Map<String, dynamic> submissionData = {
                 "user_id": userId ?? "",
                 "test_id": widget.testId ?? "",
-                "questions": answers, // already contains question_id & answer
+                "questions": answers, 
               };
 
               try {
