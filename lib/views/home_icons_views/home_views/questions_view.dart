@@ -526,17 +526,19 @@ class _QuestionsView extends State<QuestionsView> {
     final correctLabel = _getCorrectOptionLabel(question);
 
     return Card(
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.all(10),
-        height: MediaQuery.of(context).size.height,
-        child: Stack(
+        child: Column(
           children: [
             /// Question + Options
-            SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            Expanded(
+              child: Scrollbar(
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(right: 6, bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                   if (isReviewMode)
                     Container(
                       margin: const EdgeInsets.only(bottom: 10),
@@ -662,93 +664,92 @@ class _QuestionsView extends State<QuestionsView> {
                 ],
               ),
             ),
+          ),
+        ),
 
-            // Buttons at bottom
-            Positioned(
-              bottom: 10,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  SizedBox(
-                    width: screenWidth * 0.28,
-                    child: ElevatedButton(
-                     
-                      onPressed: index > 0
-                          ? () =>
-                              _controller.previousPage(
-                                  duration: _kDuration, curve: _kCurve)
-                          : null,
-                      child: const Text("Prev"),
-                    ),
-                  ),
-                  SizedBox(
-                    width: screenWidth * 0.28,
-                    child: ElevatedButton(
-                      onPressed: () => _controller.animateToPage(
-                          questions.length - 1,
-                          duration: _kDuration,
-                          curve: _kCurve),
-                      child:  Text("Skip to Last", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),),
-                    ),
-                  ),
-                  SizedBox(
-                    width: screenWidth * 0.28,
-                    child: isReviewMode
-                        ? (index == questions.length - 1
-                            ? ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue.shade700,
-                                ),
-                                onPressed: _retakeExam,
-                                child: const Text("Retake Exam",
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                              )
-                            : ElevatedButton(
-                                onPressed: () {
-                                  _controller.nextPage(
-                                      duration: _kDuration, curve: _kCurve);
-                                },
-                                child: const Text("Next"),
-                              ))
-                        : (index == questions.length - 1
-                            ? ElevatedButton(
-                                onPressed: () {
-                                  _saveAnswer(index, question);
-                                  if (answers.length < 1) {
-                                    SnackBarsList().errorSnackBar(
-                                        context,
-                                        "You must answer at least 1 questions");
-                                  } else {
-                                    _submitBox();
-                                  }
-                                },
-                                child: const Text("Submit"),
-                              )
-                            : ElevatedButton(
-                                onPressed: () {
-                                  if (selectedAnswers[index] == null) {
-                                    SnackBarsList().errorSnackBar(
-                                        context, "Please select an option");
-                                    return;
-                                  }
-                                  _saveAnswer(index, question);
-                                  _controller.nextPage(
-                                      duration: _kDuration, curve: _kCurve);
-                                },
-                                child: const Text("Next"),
-                              )),
-                  ),
-                ],
+        const SizedBox(height: 8),
+
+        // Buttons at bottom
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            SizedBox(
+              width: screenWidth * 0.28,
+              child: ElevatedButton(
+               
+                onPressed: index > 0
+                    ? () =>
+                        _controller.previousPage(
+                            duration: _kDuration, curve: _kCurve)
+                    : null,
+                child: const Text("Prev"),
               ),
+            ),
+            SizedBox(
+              width: screenWidth * 0.28,
+              child: ElevatedButton(
+                onPressed: () => _controller.animateToPage(
+                    questions.length - 1,
+                    duration: _kDuration,
+                    curve: _kCurve),
+                child:  Text("Skip to Last", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),),
+              ),
+            ),
+            SizedBox(
+              width: screenWidth * 0.28,
+              child: isReviewMode
+                  ? (index == questions.length - 1
+                      ? ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue.shade700,
+                          ),
+                          onPressed: _retakeExam,
+                          child: const Text("Retake Exam",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
+                        )
+                      : ElevatedButton(
+                          onPressed: () {
+                            _controller.nextPage(
+                                duration: _kDuration, curve: _kCurve);
+                          },
+                          child: const Text("Next"),
+                        ))
+                  : (index == questions.length - 1
+                      ? ElevatedButton(
+                          onPressed: () {
+                            _saveAnswer(index, question);
+                            if (answers.length < 1) {
+                              SnackBarsList().errorSnackBar(
+                                  context,
+                                  "You must answer at least 1 questions");
+                            } else {
+                              _submitBox();
+                            }
+                          },
+                          child: const Text("Submit"),
+                        )
+                      : ElevatedButton(
+                          onPressed: () {
+                            if (selectedAnswers[index] == null) {
+                              SnackBarsList().errorSnackBar(
+                                  context, "Please select an option");
+                              return;
+                            }
+                            _saveAnswer(index, question);
+                            _controller.nextPage(
+                                duration: _kDuration, curve: _kCurve);
+                          },
+                          child: const Text("Next"),
+                        )),
             ),
           ],
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
   }
 
   Widget _radioOption(int index, Question question, String? value,
