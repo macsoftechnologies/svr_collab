@@ -1,10 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-
-
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
@@ -70,12 +66,24 @@ Future<void> checkDeviceChange() async {
 
   userData = json.decode(encodedMap);
   userId = userData['user_id'];
-  String savedDeviceId = userData['device_id'];
+  String? savedDeviceId = userData['device_id'];
 
   // Fetch current device ID from API
   String? currentDeviceId = await getDeviceIdFromApi();
 
-  if (currentDeviceId != null && savedDeviceId != currentDeviceId) {
+  // If savedDeviceId is not yet set in local storage, sync it with the API device ID
+  if ((savedDeviceId == null || savedDeviceId.isEmpty) && currentDeviceId != null && currentDeviceId.isNotEmpty) {
+    userData['device_id'] = currentDeviceId;
+    await prefs.setString('userData', json.encode(userData));
+    return;
+  }
+
+  // Only logout if BOTH IDs exist, are non-empty, and genuinely differ
+  if (currentDeviceId != null &&
+      currentDeviceId.isNotEmpty &&
+      savedDeviceId != null &&
+      savedDeviceId.isNotEmpty &&
+      savedDeviceId != currentDeviceId) {
     prefs.clear();
 
     SnackBarsList().errorSnackBar(

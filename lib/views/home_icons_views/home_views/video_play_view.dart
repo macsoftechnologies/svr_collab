@@ -855,6 +855,7 @@ import 'package:flutter/services.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:vimeo_player_flutter/vimeo_player_flutter.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../utils/colors.dart';
 
 class VideoPlayView extends StatefulWidget {
@@ -876,7 +877,7 @@ class _VideoPlayView extends State<VideoPlayView> {
 
   // current playback speed for the server (mp4) video
   double _playbackSpeed = 1.0;
-  final List<double> _speedOptions = [0.5, 1.0, 2.0];
+  final List<double> _speedOptions = [0.5, 1.0, 1.25, 1.5, 2.0];
 
   // current playback speed for YouTube video
   double _ytPlaybackSpeed = 1.0;
@@ -899,9 +900,11 @@ class _VideoPlayView extends State<VideoPlayView> {
           ),
         );
         _ytController!.addListener(_onYtChanged);
+        WakelockPlus.enable();
       }
     } else if (url.contains("vimeo.com")) {
       isVimeo = true;
+      WakelockPlus.enable();
     } else if (url.endsWith(".mp4")) {
       isServer = true;
       _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(url))
@@ -910,12 +913,32 @@ class _VideoPlayView extends State<VideoPlayView> {
             _isInitialized = true;
           });
           _videoPlayerController!.play();
+          WakelockPlus.enable();
         });
+      _videoPlayerController!.addListener(_onVideoPlayerChanged);
     }
   }
 
   void _onYtChanged() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      if (_ytController?.value.isPlaying == true) {
+        WakelockPlus.enable();
+      } else {
+        WakelockPlus.disable();
+      }
+      setState(() {});
+    }
+  }
+
+  void _onVideoPlayerChanged() {
+    if (mounted) {
+      if (_videoPlayerController?.value.isPlaying == true) {
+        WakelockPlus.enable();
+      } else {
+        WakelockPlus.disable();
+      }
+      setState(() {});
+    }
   }
 
   // ── YouTube seek + speed helpers ─────────────────────────────────────────
@@ -981,199 +1004,433 @@ class _VideoPlayView extends State<VideoPlayView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: primaryColor,
-        title: const Text("Class Video"),
-      ),
-      body: Center(
-        child: isYouTube && _ytController != null
-            ? SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    YoutubePlayer(
-                      controller: _ytController!,
-                      showVideoProgressIndicator: true,
-                      progressIndicatorColor: primaryColor,
-                      bottomActions: [
-                        CurrentPosition(),
-                        ProgressBar(isExpanded: true),
-                        RemainingDuration(),
-                        FullScreenButton(),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.replay_10),
-                          tooltip: "Back 10s",
-                          onPressed: () =>
-                              _ytSeekBy(const Duration(seconds: -10)),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            _ytController!.value.isPlaying
-                                ? Icons.pause
-                                : Icons.play_arrow,
-                          ),
-                          onPressed: () {
-                            if (_ytController!.value.isPlaying) {
-                              _ytController!.pause();
-                            } else {
-                              _ytController!.play();
-                            }
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.forward_10),
-                          tooltip: "Forward 10s",
-                          onPressed: () =>
-                              _ytSeekBy(const Duration(seconds: 10)),
-                        ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: _speedOptions.map((speed) {
-                          final isSelected = _ytPlaybackSpeed == speed;
-                          return Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 6),
-                            child: ChoiceChip(
-                              label: Text("${speed}x"),
-                              selected: isSelected,
-                              onSelected: (_) => _setYtSpeed(speed),
-                              selectedColor: primaryColor,
-                              labelStyle: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.black87,
-                              ),
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    if (isYouTube && _ytController != null) {
+      return YoutubePlayerBuilder(
+        player: YoutubePlayer(
+          controller: _ytController!,
+          showVideoProgressIndicator: true,
+          progressIndicatorColor: primaryColor,
+          topActions: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              tooltip: "Back",
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+          bottomActions: [
+            CurrentPosition(),
+            ProgressBar(isExpanded: true),
+            RemainingDuration(),
+            FullScreenButton(),
+          ],
+        ),
+        builder: (context, player) {
+          return Scaffold(
+            backgroundColor: isLandscape ? Colors.black : null,
+            appBar: isLandscape
+                ? null
+                : AppBar(
+                    backgroundColor: primaryColor,
+                    title: const Text("Class Video"),
+                  ),
+            body: isLandscape
+                ? Stack(
+                    children: [
+                      Center(child: player),
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: SafeArea(
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
                             ),
-                          );
-                        }).toList(),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                              tooltip: "Back",
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        player,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.replay_10),
+                              tooltip: "Back 10s",
+                              onPressed: () =>
+                                  _ytSeekBy(const Duration(seconds: -10)),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                _ytController!.value.isPlaying
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                              ),
+                              onPressed: () {
+                                if (_ytController!.value.isPlaying) {
+                                  _ytController!.pause();
+                                  WakelockPlus.disable();
+                                } else {
+                                  _ytController!.play();
+                                  WakelockPlus.enable();
+                                }
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.forward_10),
+                              tooltip: "Forward 10s",
+                              onPressed: () =>
+                                  _ytSeekBy(const Duration(seconds: 10)),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: _speedOptions.map((speed) {
+                                final isSelected = _ytPlaybackSpeed == speed;
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 6),
+                                  child: ChoiceChip(
+                                    label: Text("${speed}x"),
+                                    selected: isSelected,
+                                    onSelected: (_) => _setYtSpeed(speed),
+                                    selectedColor: primaryColor,
+                                    labelStyle: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          );
+        },
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: isLandscape ? Colors.black : null,
+      appBar: isLandscape
+          ? null
+          : AppBar(
+              backgroundColor: primaryColor,
+              title: const Text("Class Video"),
+            ),
+      body: isVimeo
+          ? (isLandscape
+              ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Center(
+                      child: VimeoPlayer(
+                        videoId: _extractVimeoVideoId(widget.videoLink),
+                      ),
+                    ),
+                    Positioned(
+                      top: 16,
+                      left: 16,
+                      child: SafeArea(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            tooltip: "Back",
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
                       ),
                     ),
                   ],
-                ),
-              )
-            : isVimeo
-                ? VimeoPlayer(
+                )
+              : Center(
+                  child: VimeoPlayer(
                     videoId: _extractVimeoVideoId(widget.videoLink),
-                  )
-                : isServer
-                    ? _isInitialized
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AspectRatio(
+                  ),
+                ))
+          : isServer
+              ? _isInitialized
+                  ? (isLandscape
+                      ? Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Center(
+                              child: AspectRatio(
                                 aspectRatio:
                                     _videoPlayerController!.value.aspectRatio,
                                 child: VideoPlayer(_videoPlayerController!),
                               ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.replay_10),
-                                    tooltip: "Back 10s",
-                                    onPressed: () =>
-                                        _seekBy(const Duration(seconds: -10)),
+                            ),
+                            Positioned(
+                              top: 16,
+                              left: 16,
+                              child: SafeArea(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
                                   ),
-                                  IconButton(
-                                    icon: Icon(
-                                      _videoPlayerController!.value.isPlaying
-                                          ? Icons.pause
-                                          : Icons.play_arrow,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.arrow_back,
+                                      color: Colors.white,
+                                      size: 24,
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        if (_videoPlayerController!
-                                            .value.isPlaying) {
-                                          _videoPlayerController!.pause();
-                                        } else {
-                                          _videoPlayerController!.play();
-                                        }
-                                      });
-                                    },
+                                    tooltip: "Back",
+                                    onPressed: () => Navigator.pop(context),
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.forward_10),
-                                    tooltip: "Forward 10s",
-                                    onPressed: () =>
-                                        _seekBy(const Duration(seconds: 10)),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 12,
+                              left: 16,
+                              right: 16,
+                              child: SafeArea(
+                                top: false,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  Text(
-                                    _formatDuration(
-                                        _videoPlayerController!.value.position),
+                                  child: Row(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.replay_10,
+                                            color: Colors.white),
+                                        tooltip: "Back 10s",
+                                        onPressed: () => _seekBy(
+                                            const Duration(seconds: -10)),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          _videoPlayerController!.value.isPlaying
+                                              ? Icons.pause
+                                              : Icons.play_arrow,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            if (_videoPlayerController!
+                                                .value.isPlaying) {
+                                              _videoPlayerController!.pause();
+                                              WakelockPlus.disable();
+                                            } else {
+                                              _videoPlayerController!.play();
+                                              WakelockPlus.enable();
+                                            }
+                                          });
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.forward_10,
+                                            color: Colors.white),
+                                        tooltip: "Forward 10s",
+                                        onPressed: () => _seekBy(
+                                            const Duration(seconds: 10)),
+                                      ),
+                                      Text(
+                                        _formatDuration(_videoPlayerController!
+                                            .value.position),
+                                        style: const TextStyle(
+                                            color: Colors.white, fontSize: 12),
+                                      ),
+                                      Expanded(
+                                        child: Slider(
+                                          min: 0,
+                                          max: _videoPlayerController!
+                                              .value.duration.inMilliseconds
+                                              .toDouble(),
+                                          value: _videoPlayerController!
+                                              .value.position.inMilliseconds
+                                              .toDouble()
+                                              .clamp(
+                                                  0,
+                                                  _videoPlayerController!
+                                                      .value.duration
+                                                      .inMilliseconds
+                                                      .toDouble()),
+                                          activeColor: primaryColor,
+                                          inactiveColor: Colors.white30,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _videoPlayerController!.seekTo(
+                                                Duration(
+                                                    milliseconds:
+                                                        value.toInt()),
+                                              );
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Text(
+                                        _formatDuration(_videoPlayerController!
+                                            .value.duration),
+                                        style: const TextStyle(
+                                            color: Colors.white, fontSize: 12),
+                                      ),
+                                    ],
                                   ),
-                                  Expanded(
-                                    child: Slider(
-                                      min: 0,
-                                      max: _videoPlayerController!
-                                          .value.duration.inMilliseconds
-                                          .toDouble(),
-                                      value: _videoPlayerController!
-                                          .value.position.inMilliseconds
-                                          .toDouble()
-                                          .clamp(
-                                              0,
-                                              _videoPlayerController!
-                                                  .value.duration
-                                                  .inMilliseconds
-                                                  .toDouble()),
-                                      onChanged: (value) {
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Center(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AspectRatio(
+                                  aspectRatio:
+                                      _videoPlayerController!.value.aspectRatio,
+                                  child: VideoPlayer(_videoPlayerController!),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.replay_10),
+                                      tooltip: "Back 10s",
+                                      onPressed: () =>
+                                          _seekBy(const Duration(seconds: -10)),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        _videoPlayerController!.value.isPlaying
+                                            ? Icons.pause
+                                            : Icons.play_arrow,
+                                      ),
+                                      onPressed: () {
                                         setState(() {
-                                          _videoPlayerController!.seekTo(
-                                            Duration(milliseconds: value.toInt()),
-                                          );
+                                          if (_videoPlayerController!
+                                              .value.isPlaying) {
+                                            _videoPlayerController!.pause();
+                                            WakelockPlus.disable();
+                                          } else {
+                                            _videoPlayerController!.play();
+                                            WakelockPlus.enable();
+                                          }
                                         });
                                       },
                                     ),
-                                  ),
-                                  Text(
-                                    _formatDuration(
-                                        _videoPlayerController!.value.duration),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.fullscreen),
-                                    onPressed: _enterFullScreen,
-                                  ),
-                                ],
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: _speedOptions.map((speed) {
-                                    final isSelected = _playbackSpeed == speed;
-                                    return Padding(
-                                      padding:
-                                          const EdgeInsets.symmetric(horizontal: 6),
-                                      child: ChoiceChip(
-                                        label: Text("${speed}x"),
-                                        selected: isSelected,
-                                        onSelected: (_) => _setSpeed(speed),
-                                        selectedColor: primaryColor,
-                                        labelStyle: TextStyle(
-                                          color: isSelected
-                                              ? Colors.white
-                                              : Colors.black87,
-                                        ),
+                                    IconButton(
+                                      icon: const Icon(Icons.forward_10),
+                                      tooltip: "Forward 10s",
+                                      onPressed: () =>
+                                          _seekBy(const Duration(seconds: 10)),
+                                    ),
+                                    Text(
+                                      _formatDuration(_videoPlayerController!
+                                          .value.position),
+                                    ),
+                                    Expanded(
+                                      child: Slider(
+                                        min: 0,
+                                        max: _videoPlayerController!
+                                            .value.duration.inMilliseconds
+                                            .toDouble(),
+                                        value: _videoPlayerController!
+                                            .value.position.inMilliseconds
+                                            .toDouble()
+                                            .clamp(
+                                                0,
+                                                _videoPlayerController!
+                                                    .value.duration
+                                                    .inMilliseconds
+                                                    .toDouble()),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _videoPlayerController!.seekTo(
+                                              Duration(
+                                                  milliseconds:
+                                                      value.toInt()),
+                                            );
+                                          });
+                                        },
                                       ),
-                                    );
-                                  }).toList(),
+                                    ),
+                                    Text(
+                                      _formatDuration(_videoPlayerController!
+                                          .value.duration),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.fullscreen),
+                                      onPressed: _enterFullScreen,
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          )
-                        : const CircularProgressIndicator()
-                    : const Text("Unsupported video format"),
-      ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: _speedOptions.map((speed) {
+                                        final isSelected =
+                                            _playbackSpeed == speed;
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6),
+                                          child: ChoiceChip(
+                                            label: Text("${speed}x"),
+                                            selected: isSelected,
+                                            onSelected: (_) => _setSpeed(speed),
+                                            selectedColor: primaryColor,
+                                            labelStyle: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ))
+                  : const Center(child: CircularProgressIndicator())
+              : const Center(child: Text("Unsupported video format")),
     );
   }
 
@@ -1186,8 +1443,10 @@ class _VideoPlayView extends State<VideoPlayView> {
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     _ytController?.removeListener(_onYtChanged);
     _ytController?.dispose();
+    _videoPlayerController?.removeListener(_onVideoPlayerChanged);
     _videoPlayerController?.dispose();
     super.dispose();
   }
@@ -1216,7 +1475,7 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
   late VideoPlayerController _controller;
 
   double _playbackSpeed = 1.0;
-  final List<double> _speedOptions = [0.5, 1.0, 2.0];
+  final List<double> _speedOptions = [0.5, 1.0, 1.25, 1.5, 2.0];
 
   // controls visibility state
   bool _showControls = true;
@@ -1233,6 +1492,7 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
     _playbackSpeed = _controller.value.playbackSpeed == 0
         ? 1.0
         : _controller.value.playbackSpeed;
+    WakelockPlus.enable();
 
     // Defer the orientation/UI change until AFTER this frame is drawn and
     // the push transition has started, so the rotation doesn't fight the
@@ -1285,10 +1545,12 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
     setState(() {
       if (_controller.value.isPlaying) {
         _controller.pause();
+        WakelockPlus.disable();
         _showControls = true;
         _hideTimer?.cancel();
       } else {
         _controller.play();
+        WakelockPlus.enable();
         _startHideTimer();
       }
     });
@@ -1349,6 +1611,7 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     // Always fire this as a safety net (harmless if already restored) —
     // guarantees the app can never be left stuck in landscape even if
     // _exitFullScreen() somehow didn't run.
@@ -1383,6 +1646,30 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
                       child: AspectRatio(
                         aspectRatio: _controller.value.aspectRatio,
                         child: VideoPlayer(_controller),
+                      ),
+                    ),
+
+                    // Top-left back button
+                    Positioned(
+                      top: 16,
+                      left: 16,
+                      child: SafeArea(
+                        child: AnimatedOpacity(
+                          opacity: _showControls ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: IgnorePointer(
+                            ignoring: !_showControls,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                              tooltip: "Back",
+                              onPressed: _exitFullScreen,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
 
@@ -1422,29 +1709,32 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: _speedOptions.map((speed) {
-                                    final isSelected = _playbackSpeed == speed;
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 6),
-                                      child: ChoiceChip(
-                                        label: Text(
-                                          "${speed}x",
-                                          style: TextStyle(
-                                            color: isSelected
-                                                ? Colors.black
-                                                : Colors.white,
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: _speedOptions.map((speed) {
+                                      final isSelected = _playbackSpeed == speed;
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6),
+                                        child: ChoiceChip(
+                                          label: Text(
+                                            "${speed}x",
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                            ),
                                           ),
+                                          selected: isSelected,
+                                          onSelected: (_) => _setSpeed(speed),
+                                          selectedColor: Colors.white,
+                                          backgroundColor: Colors.black54,
                                         ),
-                                        selected: isSelected,
-                                        onSelected: (_) => _setSpeed(speed),
-                                        selectedColor: Colors.white,
-                                        backgroundColor: Colors.black54,
-                                      ),
-                                    );
-                                  }).toList(),
+                                      );
+                                    }).toList(),
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Row(

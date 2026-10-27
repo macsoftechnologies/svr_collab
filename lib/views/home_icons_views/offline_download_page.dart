@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class OfflineDownloadPage extends StatefulWidget {
   final String subjectId;
@@ -289,6 +290,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         _isPlaying = true;
       });
 
+      WakelockPlus.enable();
       _controller.play();
       _controller.setLooping(true);
     } catch (e) {
@@ -312,9 +314,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   void _togglePlayPause() {
     setState(() {
       if (_controller.value.isPlaying) {
+        WakelockPlus.disable();
         _controller.pause();
         _isPlaying = false;
       } else {
+        WakelockPlus.enable();
         _controller.play();
         _isPlaying = true;
       }
@@ -408,6 +412,34 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                             ),
                           ),
                           if (_showControls) ...[
+                            // Top-left back button
+                            Positioned(
+                              top: 16,
+                              left: 16,
+                              child: SafeArea(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.arrow_back,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                    tooltip: "Back",
+                                    onPressed: () {
+                                      if (_isFullScreen) {
+                                        _toggleFullScreen();
+                                      } else {
+                                        Navigator.of(context).pop();
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
                             // Play/pause button overlay
                             Positioned.fill(
                               child: Align(
@@ -472,6 +504,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     _controller.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([

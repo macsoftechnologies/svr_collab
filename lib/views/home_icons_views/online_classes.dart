@@ -10,6 +10,7 @@ import 'package:svr/view_models/home_icons_view_models/online_classes_view_model
 import 'package:svr/views/home_icons_views/offline_download_page.dart';
 import 'package:svr/utils/colors.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'home_views/video_play_view.dart';
@@ -621,12 +622,14 @@ class _DownloadedVideosPageState extends State<DownloadedVideosPage> {
   }
 
   void _playVideo() {
+    WakelockPlus.enable();
     _videoPlayerController.setPlaybackSpeed(_playbackSpeed);
     _videoPlayerController.play();
     setState(() => _isPlaying = true);
   }
 
   void _pauseVideo() {
+    WakelockPlus.disable();
     _videoPlayerController.pause();
     setState(() => _isPlaying = false);
   }
@@ -643,61 +646,162 @@ class _DownloadedVideosPageState extends State<DownloadedVideosPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Downloaded Video')),
+      backgroundColor: isLandscape ? Colors.black : null,
+      appBar: isLandscape
+          ? null
+          : AppBar(title: const Text('Downloaded Video')),
       body: Center(
         child: _isInitialized
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AspectRatio(
-                    aspectRatio: _videoPlayerController.value.aspectRatio,
-                    child: VideoPlayer(_videoPlayerController),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
+            ? (isLandscape
+                ? Stack(
+                    fit: StackFit.expand,
                     children: [
-                      Text(_formatDuration(
-                          _videoPlayerController.value.position)),
-                      Expanded(
-                        child: Slider(
-                          value: _currentPosition,
-                          max: _videoDuration,
-                          min: 0,
-                          onChanged: (v) =>
-                              setState(() => _currentPosition = v),
-                          onChangeEnd: (v) => _videoPlayerController
-                              .seekTo(Duration(milliseconds: v.toInt())),
+                      Center(
+                        child: AspectRatio(
+                          aspectRatio: _videoPlayerController.value.aspectRatio,
+                          child: VideoPlayer(_videoPlayerController),
                         ),
                       ),
-                      Text(_formatDuration(
-                          _videoPlayerController.value.duration)),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (var speed in [0.5, 1.0, 1.5, 2.0])
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: ElevatedButton(
-                            onPressed: () => _changePlaybackSpeed(speed),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _playbackSpeed == speed
-                                  ? Colors.blue
-                                  : Colors.grey,
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: SafeArea(
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
                             ),
-                            child: Text("${speed}x"),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                              tooltip: "Back",
+                              onPressed: () => Navigator.pop(context),
+                            ),
                           ),
                         ),
+                      ),
+                      Positioned(
+                        bottom: 12,
+                        left: 16,
+                        right: 16,
+                        child: SafeArea(
+                          top: false,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    _isPlaying ? Icons.pause : Icons.play_arrow,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed:
+                                      _isPlaying ? _pauseVideo : _playVideo,
+                                ),
+                                Text(
+                                  _formatDuration(
+                                      _videoPlayerController.value.position),
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 12),
+                                ),
+                                Expanded(
+                                  child: Slider(
+                                    value: _currentPosition.clamp(
+                                        0.0, _videoDuration),
+                                    max: _videoDuration,
+                                    min: 0,
+                                    activeColor: Colors.blue,
+                                    inactiveColor: Colors.white30,
+                                    onChanged: (v) =>
+                                        setState(() => _currentPosition = v),
+                                    onChangeEnd: (v) => _videoPlayerController
+                                        .seekTo(Duration(
+                                            milliseconds: v.toInt())),
+                                  ),
+                                ),
+                                Text(
+                                  _formatDuration(
+                                      _videoPlayerController.value.duration),
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
-                  ),
-                ],
-              )
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AspectRatio(
+                          aspectRatio: _videoPlayerController.value.aspectRatio,
+                          child: VideoPlayer(_videoPlayerController),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Text(_formatDuration(
+                                _videoPlayerController.value.position)),
+                            Expanded(
+                              child: Slider(
+                                value: _currentPosition.clamp(
+                                    0.0, _videoDuration),
+                                max: _videoDuration,
+                                min: 0,
+                                onChanged: (v) =>
+                                    setState(() => _currentPosition = v),
+                                onChangeEnd: (v) => _videoPlayerController
+                                    .seekTo(Duration(
+                                        milliseconds: v.toInt())),
+                              ),
+                            ),
+                            Text(_formatDuration(
+                                _videoPlayerController.value.duration)),
+                          ],
+                        ),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              for (var speed in [0.5, 1.0, 1.25, 1.5, 2.0])
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: ElevatedButton(
+                                    onPressed: () => _changePlaybackSpeed(speed),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _playbackSpeed == speed
+                                          ? Colors.blue
+                                          : Colors.grey,
+                                    ),
+                                    child: Text("${speed}x"),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ))
             : const CircularProgressIndicator(),
       ),
-      floatingActionButton: _isInitialized
+      floatingActionButton: (_isInitialized && !isLandscape)
           ? FloatingActionButton(
               onPressed: _isPlaying ? _pauseVideo : _playVideo,
               child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
@@ -708,6 +812,7 @@ class _DownloadedVideosPageState extends State<DownloadedVideosPage> {
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     _videoPlayerController.dispose();
     super.dispose();
   }
