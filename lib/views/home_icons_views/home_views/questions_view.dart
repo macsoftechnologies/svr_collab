@@ -732,11 +732,6 @@ class _QuestionsView extends State<QuestionsView> {
                         )
                       : ElevatedButton(
                           onPressed: () {
-                            if (selectedAnswers[index] == null) {
-                              SnackBarsList().errorSnackBar(
-                                  context, "Please select an option");
-                              return;
-                            }
                             _saveAnswer(index, question);
                             _controller.nextPage(
                                 duration: _kDuration, curve: _kCurve);
