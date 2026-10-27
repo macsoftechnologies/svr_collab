@@ -171,22 +171,6 @@ void initState() {
               )),
         ),
 
-
-        Positioned(
-            right: 30,
-            child: InkWell(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-
-                  builder: (BuildContext context) => const DemoCourses(),
-                ),
-              ),
-              child: const Text(
-               "",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            )),
         Positioned(
 
             right: 30,
@@ -556,20 +540,7 @@ class _SignupCardState extends State<SignupCard> {
                           ),
                         )),
                   ),
-                  Positioned(
-                      right: 30,
-                      child: InkWell(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (BuildContext context) => const DemoCourses(),
-                          ),
-                        ),
-                        child: const Text(
-                          "-> Demo Courses",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      )),
+
                 ],
               ));
   }
